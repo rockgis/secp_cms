@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="Userreport">
+
+	<select id="isOverlap" parameterType="Map" resultType="int">
+		SELECT 
+			COUNT(*) CNT
+		FROM MC_USER_REPORT
+		WHERE 
+			ARTICLE_SEQ = #{article_seq}
+		AND BOARD_SEQ = #{board_seq}
+		<if test="!(session_member_id == null or session_member_id == '')" >
+		AND reg_id = #{session_member_id}
+		</if>
+		<if test="(session_member_id == null or session_member_id == '')" >
+		AND IP = #{session_ip}
+		</if>
+	</select>
+	
+	<update id="write" parameterType="Map">
+		INSERT INTO MC_USER_REPORT(
+			REPORT_SEQ
+			,ARTICLE_SEQ
+			,BOARD_SEQ
+			,REPORTCONTS
+			,IP
+			,REG_DT
+			<if test="!(session_member_id == null or session_member_id == '')" >
+			,REG_ID
+			</if>
+			<if test="!(session_member_nm == null or session_member_nm == '')" >
+			,REG_NM
+			</if>
+		)VALUES(
+			SEQ_MC_USER_REPORT.nextval
+			,#{article_seq}
+			,#{board_seq}
+			,#{reportconts}
+			,#{session_ip}
+			,sysdatetime
+			<if test="!(session_member_id == null or session_member_id == '')" >
+			,#{session_member_id}
+			</if>
+			<if test="!(session_member_nm == null or session_member_nm == '')" >
+			,#{session_member_nm}
+			</if>
+		)
+	</update>
+	
+	<select id="viewlist" parameterType="Map" resultType="mcmap">
+		SELECT
+			REPORT_SEQ, ARTICLE_SEQ, BOARD_SEQ, REPORTCONTS, IP, TO_CHAR(REG_DT, 'YYYY-MM-DD HH24:mi:ss') AS REG_DT, REG_ID, REG_NM
+		FROM MC_USER_REPORT 
+		WHERE ARTICLE_SEQ = #{article_seq}
+		ORDER BY REPORT_SEQ DESC
+	</select>
+	
+</mapper>

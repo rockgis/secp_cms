@@ -1,0 +1,89 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="Program">
+	
+	<sql id="listWhere">
+		WHERE a.DEL_YN='N'
+				<if test="!(keyword == null or keyword == '')" >
+					<choose>
+						<when test="condition == 'program_nm'.toString()">AND PROGRAM_NM like '%'||#{keyword}||'%'</when>
+						<when test="condition == 'url'.toString()">AND URL like '%'||#{keyword}||'%'</when>
+					</choose>
+        		</if>
+		<if test="!(start_dt == null or start_dt == '') and !(end_dt == null or end_dt == '')" >
+			AND TO_CHAR(REG_DT, 'YYYY-MM-DD') BETWEEN #{start_dt} AND #{end_dt}
+      	</if>
+	</sql>
+	
+	<select id="list" parameterType="Map" resultType="mcmap">
+		SELECT PT1.* FROM (
+            SELECT
+                rownum RN,
+                a.*, NVL(b.USER_PAGE_CNT, 0) AS USER_PAGE_CNT
+            FROM MC_PROGRAMS a LEFT OUTER JOIN (SELECT TARGET_URL, COUNT(1) AS USER_PAGE_CNT FROM MC_CMS_MENU WHERE TARGET_URL <![CDATA[ <> ]]> '' GROUP BY TARGET_URL) b
+			ON a.URL = b.TARGET_URL
+            <include refid="listWhere"/>
+        ) PT1
+		WHERE CEIL(RN/NVL(#{rows},10))=NVL(#{cpage},1)
+	</select>
+	
+	<select id="pagination" parameterType="Map" resultType="mcmap">
+	    SELECT
+	        CEIL(COUNT(1)/NVL(#{rows}, 10)) TOTALPAGE,
+	        COUNT(1) TOTALCOUNT
+        FROM (SELECT * FROM MC_PROGRAMS ORDER BY SEQ DESC) a
+		<include refid="listWhere"/>
+	</select>
+	
+	<select id="menu_list" parameterType="Map" resultType="mcmap">
+		SELECT
+			*
+		FROM(
+			SELECT 
+				CMS_MENU_SEQ, PARENT_MENU_SEQ, TITLE, MENU_ORDER, LEVEL as MENU_LEVEL, SITE_ID, MENU_URL, TARGET_URL, BLANK_YN, CHILD_TYPE, TOP_YN, MENU_TYPE, DEL_YN, USE_YN, 
+				SYS_CONNECT_BY_PATH(TITLE, '>') as PAGE_NAVI,
+				TO_CHAR(REG_DT, 'YYYY-MM-DD') as REG_DT
+			FROM MC_CMS_MENU a
+			START WITH PARENT_MENU_SEQ = 0
+			CONNECT BY PRIOR CMS_MENU_SEQ = PARENT_MENU_SEQ
+			ORDER SIBLINGS BY a.MENU_ORDER
+		)
+		WHERE TARGET_URL = #{menu_url}
+	</select>
+	
+	<update id="modify" parameterType="Map">
+		UPDATE MC_PROGRAMS SET
+			PROGRAM_NM = 				#{program_nm}
+			, URL = 					#{url}
+			, MANAGE_URL = 					#{manage_url}
+			, MOD_ID = 				#{session_member_id}
+			, MOD_NM = 				#{session_member_nm}
+			, MOD_DT = 				sysdatetime
+		WHERE SEQ = #{seq}
+	</update>
+	
+	<update id="write" parameterType="Map">
+		INSERT INTO MC_PROGRAMS(
+			SEQ, PROGRAM_NM, URL, MANAGE_URL, REG_ID, REG_NM, REG_DT, DEL_YN
+		)VALUES(
+			SEQ_MC_PROGRAMS.NEXTVAL, #{program_nm}, #{url}, #{manage_url}, #{session_member_id}, #{session_member_nm}, sysdatetime, 'N' 
+		)
+	</update>
+	
+	<select id="view" parameterType="Map" resultType="mcmap">
+		SELECT
+			SEQ, PROGRAM_NM, URL, MANAGE_URL, REG_ID, REG_NM, REG_DT, DEL_YN
+		FROM MC_PROGRAMS 
+		WHERE SEQ = #{seq} 
+	</select>
+	
+	<update id="del" parameterType="Map">
+		UPDATE MC_PROGRAMS SET
+			DEL_YN = 'Y'
+			,DEL_ID = #{session_member_id}
+			,DEL_NM = #{session_member_nm}
+			,DEL_DT = sysdatetime
+		WHERE SEQ = #{seq} 
+	</update>
+	
+</mapper>

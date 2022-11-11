@@ -1,0 +1,292 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="Site">
+	
+	<sql id="listWhere">
+		<if test="!(keyword == null or keyword == '')" >
+			<choose>
+				<when test="condition == 'title'.toString()">AND TITLE like CONCAT('%',#{keyword},'%')</when>
+				<when test="condition == 'sub_path'.toString()">AND SUB_PATH like CONCAT('%',#{keyword},'%')</when>
+			</choose>
+      	</if>
+		<if test="!(start_dt == null or start_dt == '') and !(end_dt == null or end_dt == '')" >
+			AND DATE_FORMAT(REG_DT, '%Y-%m-%d') BETWEEN #{start_dt} AND #{end_dt}
+      	</if>
+	</sql>
+	
+	<select id="list" parameterType="Map" resultType="mcmap">
+		SELECT 
+			A.*, B.STAFFS
+		FROM (
+			SELECT 
+				CAST(@ROWNUM:=@ROWNUM+1 AS SIGNED) AS RN, TB.*
+			FROM(
+				SELECT 
+					* 
+				FROM
+					MC_CMS_MENU
+				WHERE
+					PARENT_MENU_SEQ = 0
+				AND 
+					DEL_YN = 'N'
+				<include refid="listWhere"/>
+				ORDER BY CMS_MENU_SEQ DESC
+			) AS TB, 
+			(SELECT @ROWNUM:=0) AS R
+		)AS A
+		LEFT OUTER JOIN 
+		(
+			SELECT
+				CMS_MENU_SEQ, GROUP_CONCAT(MEMBER_ID, '(', MEMBER_NM, ')') AS STAFFS
+			FROM MC_CMS_STAFF
+			GROUP BY CMS_MENU_SEQ
+		) AS B
+		ON A.CMS_MENU_SEQ = B.CMS_MENU_SEQ
+		WHERE CEIL(RN/IFNULL(#{rows},10))=IFNULL(#{cpage},1)
+	</select>
+	
+	<select id="pagination" parameterType="Map" resultType="mcmap">
+	    SELECT
+	        CEIL(COUNT(1)/IFNULL(#{rows}, 10)) TOTALPAGE,
+	        COUNT(1) TOTALCOUNT
+        FROM MC_CMS_MENU a
+        WHERE
+			PARENT_MENU_SEQ = 0
+		AND 
+			DEL_YN = 'N'
+		<include refid="listWhere"/>
+	</select>
+	
+	<update id="modify" parameterType="Map">
+		UPDATE MC_CMS_MENU SET
+			TITLE = 				#{title}
+			<if test="!(sub_path == null or sub_path == '')" >
+			, SUB_PATH = 			#{sub_path}
+			</if>
+			, CHILD_TYPE = 1
+			, FOOTER_HTML = 		#{footer_html}
+			, SATISFACTION_YN = 		#{satisfaction_yn}
+			, MANAGE_YN = 		#{manage_yn}
+			, POPUP_TYPE = 			#{popup_type}
+			, MOD_ID = 				#{session_member_id}
+			, MOD_NM = 				#{session_member_nm}
+			, MOD_DT = 				sysdate()
+		WHERE CMS_MENU_SEQ = #{cms_menu_seq}
+	</update>
+	
+	<update id="write" parameterType="Map" useGeneratedKeys="true" keyColumn="cms_menu_seq" keyProperty="cms_menu_seq">
+		INSERT INTO MC_CMS_MENU(
+			TITLE, USE_YN, REG_ID, REG_NM, REG_DT, SUB_PATH, PARENT_MENU_SEQ, CHILD_TYPE
+		  )  
+		 VALUES(
+			#{title}, 'Y', #{session_member_id}, #{session_member_nm}, sysdate(), #{sub_path}, 0, 1
+		 )
+	</update>
+	
+	<select id="view" parameterType="Map" resultType="mcmap">
+		SELECT
+			CMS_MENU_SEQ, TITLE, SUB_PATH, FOOTER_HTML, PRIVACY_HTML, SATISFACTION_YN, MANAGE_YN, POPUP_TYPE
+		FROM MC_CMS_MENU 
+		WHERE CMS_MENU_SEQ = #{cms_menu_seq}
+	</select>
+	
+	<update id="del" parameterType="Map">
+		UPDATE MC_CMS_MENU SET
+			DEL_YN = 'Y'
+			,DEL_ID = #{session_member_id}
+			,DEL_NM = #{session_member_nm}
+			,DEL_DT = sysdate()
+		WHERE CMS_MENU_SEQ = #{cms_menu_seq} 
+	</update>
+	
+	<select id="basic_view" parameterType="String" resultType="mcmap">
+		SELECT
+			A.* , B.*
+		FROM(		
+			SELECT 
+				#{site_id} AS CMS_MENU_SEQ,
+				SITE_ID, LOGOUT_TIME_YN, LOGOUT_TIME, PW_CHANGE_YN, PW_CHANGE_CYCLE, DORMANCY_YN, DORMANCY_DAY, ADM_LOGOUT_TIME_YN, ADM_LOGOUT_TIME, ADM_PW_CHANGE_YN, ADM_PW_CHANGE_CYCLE,
+				ADM_DORMANCY_YN, ADM_DORMANCY_DAY		
+			FROM MC_BASIC_SETTING
+			WHERE SITE_ID='1'
+		) A LEFT OUTER JOIN MC_CMS_MENU B
+		ON A.CMS_MENU_SEQ = B.CMS_MENU_SEQ
+	</select>
+	
+	<update id="basic_modify" parameterType="Map">
+		<selectKey keyProperty="check_cnt" resultType="int" order="BEFORE">
+		SELECT COUNT(1) FROM MC_BASIC_SETTING WHERE SITE_ID = #{site_id}
+		</selectKey>
+		<choose>
+			<when test="check_cnt>0">
+			UPDATE MC_BASIC_SETTING SET
+				LOGOUT_TIME_YN = 		#{logout_time_yn}
+				, LOGOUT_TIME = 		#{logout_time}
+				, PW_CHANGE_YN = 		#{pw_change_yn}
+				, PW_CHANGE_CYCLE = 		#{pw_change_cycle}
+				, DORMANCY_YN = 		#{dormancy_yn}
+				, DORMANCY_DAY = 		#{dormancy_day}
+				, ADM_LOGOUT_TIME_YN = 		#{adm_logout_time_yn}
+				, ADM_LOGOUT_TIME = 		#{adm_logout_time}
+				, ADM_PW_CHANGE_YN = 		#{adm_pw_change_yn}
+				, ADM_PW_CHANGE_CYCLE = 		#{adm_pw_change_cycle}
+				, ADM_DORMANCY_YN = 		#{adm_dormancy_yn}
+				, ADM_DORMANCY_DAY = 		#{adm_dormancy_day}
+			WHERE SITE_ID = #{site_id}
+			</when>
+			<otherwise>
+			INSERT INTO MC_BASIC_SETTING(
+			 	SITE_ID, LOGOUT_TIME_YN, LOGOUT_TIME, PW_CHANGE_YN, PW_CHANGE_CYCLE, DORMANCY_YN, DORMANCY_DAY, ADM_LOGOUT_TIME_YN, ADM_LOGOUT_TIME, ADM_PW_CHANGE_YN, ADM_PW_CHANGE_CYCLE, ADM_DORMANCY_YN, ADM_DORMANCY_DAY 
+			 ) VALUES(
+			 	#{site_id}, #{logout_time_yn}, #{logout_time}, #{pw_change_yn}, #{pw_change_cycle}, #{dormancy_yn}, #{dormancy_day}, #{adm_logout_time_yn}, #{adm_logout_time}, #{adm_pw_change_yn}, #{adm_pw_change_cycle}, #{adm_dormancy_yn}, #{adm_dormancy_day}
+			 )
+			</otherwise>
+		</choose>
+	</update>
+	
+	<select id="js_css_main" parameterType="Map" resultType="mcmap">
+		SELECT
+			FILE_NAME, REG_NM, REG_ID, REG_DT
+		FROM mc_cms_libs a 
+		WHERE SEQ IN (
+				SELECT
+					MAX(SEQ) AS SEQ
+				FROM mc_cms_libs t
+				GROUP BY SITE_ID, FILE_NAME
+			)
+	</select>
+	
+	<select id="js_css_list" parameterType="Map" resultType="mcmap">
+		SELECT 
+			A.*
+		FROM (
+			SELECT 
+				CAST(@ROWNUM:=@ROWNUM+1 AS SIGNED) AS RN, TB.*
+			FROM(
+				SELECT 
+					SEQ, SITE_ID, FILE_NAME, REG_ID, REG_NM, DATE_FORMAT(REG_DT, '%Y-%m-%d %H %i') as REG_DT 
+				FROM mc_cms_libs
+				WHERE SITE_ID=#{site_id} AND FILE_NAME=#{file_name}
+				ORDER BY SEQ DESC
+			) AS TB, 
+			(SELECT @ROWNUM:=0) AS R
+		)AS A
+		WHERE CEIL(RN/IFNULL(#{rows},10))=IFNULL(#{cpage},1)
+	</select>
+	
+	<select id="js_css_pagination" parameterType="Map" resultType="mcmap">
+	    SELECT
+	        CEIL(COUNT(1)/IFNULL(#{rows}, 10)) TOTALPAGE,
+	        COUNT(1) TOTALCOUNT
+        FROM mc_cms_libs a
+        WHERE SITE_ID=#{site_id} AND FILE_NAME=#{file_name}
+	</select>
+	
+	<update id="js_css_write" parameterType="Map" >
+		INSERT INTO MC_CMS_LIBS(
+		 	SITE_ID, FILE_NAME, CODE_TEXT, REG_NM, REG_ID, REG_DT
+		) VALUES(
+		 	#{site_id}, #{file_name}, #{code_text}, #{session_member_nm}, #{session_member_id}, sysdate()
+		)
+	</update>
+	
+	<select id="js_css_get_item" parameterType="Map" resultType="mcmap">
+		SELECT
+			CODE_TEXT
+		FROM mc_cms_libs a 
+		WHERE SEQ = #{seq}
+	</select>
+	
+	<select id="js_css_view" parameterType="Map" resultType="mcmap">
+		SELECT
+			CODE_TEXT
+		FROM mc_cms_libs a 
+		WHERE SEQ = (
+				SELECT
+					MAX(SEQ) AS SEQ
+				FROM mc_cms_libs t
+				WHERE SITE_ID=#{site_id} AND FILE_NAME=#{file_name}
+			)
+	</select>
+	
+	<select id="layout_list" parameterType="Map" resultType="mcmap">
+		SELECT
+			*
+		FROM MC_LAYOUT 
+		WHERE SITE_ID=#{site_id}
+		ORDER BY IDX ASC
+	</select>
+	
+	<select id="layout_dtl_list" parameterType="Map" resultType="mcmap">
+		SELECT
+			*
+		FROM MC_LAYOUT_DETAIL 
+		WHERE PARENT_SEQ=#{seq}
+		ORDER BY IDX ASC
+	</select>
+	
+	<update id="layout_delete" parameterType="Map" >
+		DELETE FROM MC_LAYOUT WHERE SITE_ID=#{site_id}
+	</update>
+	
+	<update id="layout_dtl_delete" parameterType="Map" >
+		DELETE FROM MC_LAYOUT_DETAIL WHERE PARENT_SEQ IN (SELECT SEQ FROM MC_LAYOUT WHERE SITE_ID=#{site_id})
+	</update>
+	
+	<update id="layout_insert" parameterType="Map" useGeneratedKeys="true" keyColumn="seq" keyProperty="parent_seq">
+		INSERT INTO MC_LAYOUT(
+		 	SITE_ID, IDX, COL, ROW, TITLE, TAB_YN
+		) VALUES(
+		 	#{site_id}, #{idx}, #{col}, #{row}, #{title}, #{tab_yn}
+		)
+	</update>
+	
+	<update id="layout_dtl_insert" parameterType="Map" >
+		INSERT INTO MC_LAYOUT_DETAIL(
+		 	PARENT_SEQ, IDX, COM_TYPE, TAB_TITLE, CONTS, BOARD_SEQ, LINK_URL, CNT
+		) VALUES(
+		 	#{parent_seq}, #{idx}, #{com_type}, #{tab_title}, #{conts}, #{board_seq}, #{link_url}, #{cnt}
+		)
+	</update>
+	
+	<update id="insert_source_history" parameterType="Map" >
+		INSERT INTO MC_SOURCE_HISTORY(
+		 	FILE_PATH, CODE_TEXT, REG_NM, REG_ID, REG_DT
+		) VALUES(
+		 	#{file_path}, #{source}, #{session_member_nm}, #{session_member_id}, sysdate()
+		)
+	</update>
+	
+	<select id="source_list" parameterType="Map" resultType="mcmap">
+		SELECT 
+			A.*
+		FROM (
+			SELECT 
+				CAST(@ROWNUM:=@ROWNUM+1 AS SIGNED) AS RN, TB.*
+			FROM(
+				SELECT 
+					SEQ, FILE_PATH, REG_ID, REG_NM, DATE_FORMAT(REG_DT, '%Y-%m-%d %H %i') as REG_DT 
+				FROM MC_SOURCE_HISTORY
+				WHERE FILE_PATH=#{file_path}
+				ORDER BY SEQ DESC
+			) AS TB, 
+			(SELECT @ROWNUM:=0) AS R
+		)AS A
+		WHERE CEIL(RN/IFNULL(#{rows},10))=IFNULL(#{cpage},1)
+	</select>
+	
+	<select id="source_pagination" parameterType="Map" resultType="mcmap">
+	    SELECT
+	        CEIL(COUNT(1)/IFNULL(#{rows}, 10)) TOTALPAGE,
+	        COUNT(1) TOTALCOUNT
+        FROM MC_SOURCE_HISTORY a
+        WHERE FILE_PATH=#{file_path}
+	</select>
+	
+	<select id="previous_source" parameterType="Map" resultType="mcmap">
+		SELECT
+			CODE_TEXT
+		FROM MC_SOURCE_HISTORY a 
+		WHERE SEQ = #{seq}
+	</select>
+</mapper>

@@ -1,0 +1,48 @@
+<div class="commentbox">
+			
+	        <form id="cFrm" name="cFrm" method="post" novalidate="novalidate">
+		        <div class="comment ctfirst">
+					<p class="comment_text">
+						<textarea data-ng-model="param.conts" required maxlength="300"></textarea>
+					</p>
+					<p class="comment_bt">
+						<img src="/images/super/contents/btn_comment.gif" alt="답글등록" style="cursor:pointer;" data-ng-click="commentSubmit();"/>
+				</div>
+			</form>
+	        <p class="comm_txt">*댓글은 <b>300</b> 자 내외로 작성해주시기 바랍니다.</p>
+	        
+			<div class="commentlist">
+	        <form id="rFrm" name="rFrm" method="post" novalidate="novalidate">
+				<ul>
+					<li data-ng-if="board.list.length == 0"></li>
+					<li data-ng-repeat="item in board.list" data-ng-class="{next : item.lv != '1'}">
+						<div data-ng-if="item.del_yn=='Y'">
+						삭제된 메시지 입니다.
+						</div>
+						<div data-ng-if="item.del_yn!='Y'">
+							<div>{{item.reg_nm}} <span class="comment_date">{{item.reg_dt|myDate:'yyyy-MM-dd HH:mm'}}</span>
+								<span class="bt_alls">
+									<input type="button" class="c_btn" data-ng-click="commentReplyOpen(item.comment_seq)" value="답글">
+									<input type="button" class="c_btn" data-ng-click="commentReplyClose(item.comment_seq)" value="취소">
+									<input type="button" class="c_btn" data-ng-click="commentDel(item.comment_seq)" value="삭제">
+								</span>								
+							</div>
+							<div class="textcomment">
+								<strong style="color:#f8571e" ng-if="!!item.parent_nm">{{item.parent_nm}}</strong>
+								<span style="white-space:pre-wrap;">{{item.conts}}</span>
+							</div>
+							<div class="comment reply_zone_{{item.comment_seq}}" style="display:none;">
+								<p class="comment_text">
+									<textarea ng-model="item.reply_cont" ng-required="current_seq==item.comment_seq" maxlength="300"></textarea>
+								</p>
+								<p class="comment_bt">
+									<img src="/images/super/contents/btn_comment.gif" alt="답글등록" style="cursor:pointer;" data-ng-click="commentReply(item);"/>
+								</p>
+							</div>
+						</div>
+					</li>
+				</ul>
+			</form>
+			</div>
+			<pagination total-page="board.totalPage" current-page="board.currentPage" on-select-page="board.go(page)"></pagination>
+</div>

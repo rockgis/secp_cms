@@ -1,0 +1,82 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+
+<taglib xmlns="http://java.sun.com/xml/ns/j2ee" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://java.sun.com/xml/ns/j2ee http://java.sun.com/xml/ns/j2ee/web-jsptaglibrary_2_0.xsd"
+	version="2.0">
+
+	<description>JSTL 1.1 user functions library</description>
+	<display-name>JSTL user functions</display-name>
+	<tlib-version>1.1</tlib-version>
+	<short-name>dtf</short-name>
+
+	<function>
+		<description>getTime</description>
+		<name>getTime</name>
+		<function-class>com.mc.common.util.DateUtil</function-class>
+		<function-signature>java.lang.String getTime(java.lang.String)</function-signature>
+		<example>
+     		${dtf:getTime('yyyy/MM/dd') }
+    	</example>
+	</function>
+
+	<function>
+		<description>getCurrentFirstDay</description>
+		<name>getCurrentFirstDay</name>
+		<function-class>com.mc.common.util.DateUtil</function-class>
+		<function-signature>java.lang.String getCurrentFirstDay(java.lang.String)</function-signature>
+		<example>
+     		${dtf:getCurrentFirstDay('yyyy-MM-dd') }
+    	</example>
+	</function>
+
+	<function>
+		<description>getLastMonthDay</description>
+		<name>getLastMonthDay</name>
+		<function-class>com.mc.common.util.DateUtil</function-class>
+		<function-signature>java.lang.String getLastMonthDay(java.lang.String, java.lang.String)</function-signature>
+		<example>
+     		${dtf:getLastMonthDay('2018-02-01', 'yyyy-MM-dd') }
+    	</example>
+	</function>
+
+	<function>
+		<description>simpleDateFormat</description>
+		<name>simpleDateFormat</name>
+		<function-class>com.mc.common.util.DateUtil</function-class>
+		<function-signature>java.lang.String simpleDateFormat(java.lang.String, java.lang.String, java.lang.String)</function-signature>
+		<example>
+     		${dtf:simpleDateFormat('2013-04-03 10:28:16.0', 'yyyy-MM-dd HH:mm:ss' , 'yyyy-MM-dd') }
+    	</example>
+	</function>
+
+	<function>
+		<description>getTimeDiffLabel</description>
+		<name>getTimeDiffLabel</name>
+		<function-class>com.mc.common.util.DateUtil</function-class>
+		<function-signature>java.lang.String getTimeDiffLabel(java.lang.String, java.lang.String)</function-signature>
+		<example>
+     		${dtf:getTimeDiffLabel('2013-04-03 10:28:16', 'yyyy-MM-dd HH:mm:ss') }
+    	</example>
+	</function>
+
+	<function>
+		<description>getCurrentDateBMonth</description>
+		<name>getCurrentDateBMonth</name>
+		<function-class>com.mc.common.util.DateUtil</function-class>
+		<function-signature>java.lang.String getCurrentDateBMonth(java.lang.String, java.lang.String, int)</function-signature>
+		<example>
+     		${dtf:getCurrentDateBMonth('2019-10-01', 'yyyy-MM-dd', 3) }
+    	</example>
+	</function>
+
+	<function>
+		<description>diffOfDate</description>
+		<name>diffOfDate</name>
+		<function-class>com.mc.common.util.DateUtil</function-class>
+		<function-signature>java.lang.String diffOfDate(java.lang.String, java.lang.String)</function-signature>
+		<example>
+     		${dtf:diffOfDate('20190401', '20190320') }
+    	</example>
+	</function>
+
+</taglib>

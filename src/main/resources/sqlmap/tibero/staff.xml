@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="Staff">
+	
+	<select id="group_list" parameterType="Map" resultType="mcmap">
+	<!-- 계층내 정렬위해 Index 생성 : create index IDX_GROUP_SORTORDER on MC_GROUP(PARENT_SEQ, ORDER_SEQ); -->
+		<![CDATA[
+        SELECT 
+            GROUP_SEQ, GROUP_NM, PARENT_SEQ, USE_YN, REG_DT, ORDER_SEQ, LEVEL, DEL_YN
+        FROM MC_GROUP a
+        WHERE GROUP_SEQ <> 1 AND DEL_YN='N'
+        START WITH PARENT_SEQ = #{start_group_seq}
+        CONNECT BY PRIOR GROUP_SEQ = PARENT_SEQ
+		]]> 
+	</select>
+	
+	<select id="list" parameterType="Map" resultType="mcmap">
+        SELECT
+            A.GROUP_SEQ, A.GROUP_NM,
+            B.MEMBER_ID, B.MEMBER_NM, B.EMAIL, B.TEL, B.CELL, B.LAST_LOGIN, B.ORDER_SEQ,
+            B.POSITIONS, B.RESPONSIBILITIES
+        FROM (
+            SELECT                 
+                ROWNUM as RN, GROUP_SEQ, GROUP_NM
+            FROM MC_GROUP
+            WHERE DEL_YN='N'
+            START WITH GROUP_SEQ = #{group_seq}
+            CONNECT BY PRIOR GROUP_SEQ = PARENT_SEQ
+            ORDER SIBLINGS BY ORDER_SEQ
+        ) A LEFT OUTER JOIN MC_MEMBER B
+        ON A.GROUP_SEQ = B.GROUP_SEQ
+        WHERE B.DEL_YN='N'
+		<if test="(has_child=='N'.toString())">
+			AND A.GROUP_SEQ=#{group_seq}
+		</if>
+        ORDER BY A.RN, B.ORDER_SEQ
+	</select>
+	
+</mapper>

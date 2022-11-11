@@ -1,0 +1,90 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="License">
+
+	
+	<sql id="listWhere">
+		WHERE a.DEL_YN='N'
+		<if test="!(gubun == null or gubun == '')" >
+			AND a.GUBUN = #{gubun}
+		</if>
+		<if test="!(keyword == null or keyword == '')" >
+			<choose>
+				<when test="condition == 'title'.toString()">AND TITLE like CONCAT('%',#{keyword},'%')</when>
+				<when test="condition == 'ip'.toString()">AND IP like CONCAT('%',#{keyword},'%')</when>
+			</choose>
+      	</if>
+	</sql>
+	
+	<select id="list" parameterType="Map" resultType="mcmap">
+		SELECT 
+			A.*
+		FROM (
+			SELECT 
+				CAST(@ROWNUM:=@ROWNUM+1 AS SIGNED) AS RN, TB.*
+			FROM(
+				SELECT
+				    *
+				FROM MC_LICENSE a
+				<include refid="listWhere"/>
+				ORDER BY SEQ DESC
+			) AS TB, 
+			(SELECT @ROWNUM:=0) AS R
+		)AS A
+		WHERE CEIL(RN/IFNULL(#{rows},10))=IFNULL(#{cpage},1)
+	</select>
+	
+	<select id="pagination" parameterType="Map" resultType="mcmap">
+	    SELECT
+	        CEIL(COUNT(1)/IFNULL(#{rows}, 10)) TOTALPAGE,
+	        COUNT(1) TOTALCOUNT
+        FROM MC_LICENSE a
+		<include refid="listWhere"/>
+	</select>
+	
+	<update id="modify" parameterType="Map">
+		UPDATE MC_LICENSE SET
+			GUBUN = 				#{gubun}
+			, NAME = 				#{name}
+			, EMAIL = 			#{email}
+			, COMPANY = 		#{company}
+			, ISSUED_DT = 		#{issued_dt}
+			, MAC_ADDRESS = 	#{mac_address}
+			, BUILD_ID = 		#{build_id}
+			, VERSION = 		#{version}
+		WHERE SEQ = #{seq}
+	</update>
+	
+	<update id="write" parameterType="Map">
+		<selectKey keyProperty="build_id" resultType="String" order="BEFORE">
+      		SELECT CONCAT(#{build_id_prefix}, LPAD(IFNULL(MAX(SEQ), 0)+1, 5, '0')) AS build_id FROM MC_LICENSE
+     	</selectKey> 
+		INSERT INTO MC_LICENSE(
+			GUBUN, NAME, EMAIL, COMPANY, ISSUED_DT, MAC_ADDRESS, BUILD_ID, VERSION, REG_ID, REG_DT
+		)VALUES(
+			#{gubun}, #{name}, #{email}, #{company}, #{issued_dt}, #{mac_address}, #{build_id}, #{version}, #{session_member_id}, sysdate()
+		)
+	</update>
+	
+	<select id="view" parameterType="Map" resultType="mcmap">
+		SELECT
+			SEQ, GUBUN, NAME, EMAIL, COMPANY, ISSUED_DT, MAC_ADDRESS, BUILD_ID, VERSION
+		FROM MC_LICENSE 
+		WHERE SEQ = #{seq}
+	</select>
+	
+	<select id="view2" parameterType="Map" resultType="com.mc.web.programs.back.license.LicenseDTO">
+		SELECT
+			SEQ, GUBUN, NAME, EMAIL, COMPANY, ISSUED_DT as issuedDt, MAC_ADDRESS as macAddress, BUILD_ID as buildId, VERSION
+		FROM MC_LICENSE 
+		WHERE SEQ = #{seq}
+	</select>
+	
+	<update id="del" parameterType="Map">
+		UPDATE MC_LICENSE SET
+			DEL_YN = 'Y',
+			DEL_DT = sysdate(),
+			DEL_ID = #{session_member_id}
+		WHERE SEQ = #{seq} 
+	</update>
+</mapper>

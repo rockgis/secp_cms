@@ -1,0 +1,159 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="PortalBoard">
+
+	<!-- 목록 -->
+	<select id="boardList" parameterType="Map" resultType="mcmap">
+	  <if test="type == 1 and !(keyword != null and keyword != '')">
+		SELECT 
+			0 AS RN
+			, MA.ARTICLE_SEQ
+			, MA.TITLE
+			, MA.REG_NM
+			, MA.CONTS
+			, DATE_FORMAT(MA.REG_DT, '%Y-%m-%d') AS REG_DT
+			, DATE_FORMAT(MA.REPLY_DT, '%Y-%m-%d') AS REPLY_DT
+			, DATE_FORMAT(MA.REG_DT, '%Y-%m-%d') AS REG_DT2
+		FROM MC_ARTICLE MA
+		WHERE BOARD_SEQ = #{type}
+		 	  AND NOTICE_YN = 'Y'
+		 	  AND DEL_YN = 'N' 
+		UNION ALL
+	   </if>
+		(SELECT 
+			TB.*
+		FROM (
+			SELECT 
+				CAST(@rownum:=@rownum+1 AS SIGNED) AS RN
+				, M.ARTICLE_SEQ
+				, M.TITLE
+				, M.REG_NM
+				, M.CONTS
+				, DATE_FORMAT(M.REG_DT, '%Y-%m-%d') AS REG_DT
+				, DATE_FORMAT(M.REPLY_DT, '%Y-%m-%d') AS REPLY_DT
+				, DATE_FORMAT(M.REG_DT, '%Y-%m-%d') AS REG_DT2
+			FROM MC_ARTICLE M,
+			(select @rownum := 0) rownum
+			WHERE BOARD_SEQ = #{type}
+			 	  AND DEL_YN = 'N' 
+			 	  <if test="!(sch == null or sch == '' or keyword == null or keyword == '')">
+					<choose>
+						<when test="sch == 1">
+							AND TITLE LIKE CONCAT('%', #{keyword}, '%')
+						</when>
+						<when test="sch == 2">
+							AND CONTS LIKE CONCAT('%', #{keyword}, '%')
+						</when>
+						<when test="sch == 3">
+							AND (TITLE LIKE CONCAT('%', #{keyword}, '%') OR CONTS LIKE CONCAT('%', #{keyword}, '%'))
+						</when>
+					</choose>
+				</if>
+			) TB
+		ORDER BY RN DESC	
+		LIMIT #{stPageVol}, #{perPageNum})	
+	</select>
+	
+	<!-- 게시글 총 갯수 -->
+	<select id="getTotalCnt" resultType="Integer" parameterType="com.mc.web.programs.front.board.Pager.Criteria">
+		SELECT 
+			COUNT(*) 
+		FROM mccms.MC_ARTICLE 
+		WHERE 
+			BOARD_SEQ = #{type}
+			AND DEL_YN = 'N' 
+		<if test="!(sch == null or sch == '' or keyword == null or keyword == '')">
+			<choose>
+				<when test="sch == 1">
+					AND TITLE LIKE CONCAT('%',#{keyword},'%')
+				</when>
+				<when test="sch == 2">
+					AND CONTS LIKE CONCAT('%',#{keyword},'%')
+				</when>
+				<when test="sch == 3">
+					AND (TITLE LIKE CONCAT('%', #{keyword}, '%') OR CONTS LIKE CONCAT('%', #{keyword}, '%'))
+				</when>
+			</choose>
+		</if>
+	</select>
+
+	<!-- 게시글 상세화면 -->
+	<select id="boardDetail" parameterType="hashmap" resultType="mcmap">
+		<![CDATA[
+		SELECT 
+			MA.ARTICLE_SEQ 
+			, DATE_FORMAT(MA.REG_DT, '%Y-%m-%d') AS REG_DT
+			, MA.REG_NM
+			, MA.CONTS
+			, MA.TITLE
+			, MA.VIEW_CNT
+			, MA.REPLY_CONTS
+			, DATE_FORMAT(MA.REPLY_DT, '%Y-%m-%d') AS REPLY_DT
+			, MA.REPLY_NM
+			, MIS.ARTICLE_SEQ AS minus
+			, MIS.TITLE AS minusTITLE
+			, PLS.ARTICLE_SEQ AS plus
+			, PLS.TITLE AS plusTITLE
+			, (SELECT MAX(ARTICLE_SEQ) FROM MC_ARTICLE WHERE BOARD_SEQ = #{type}) AS MAXas
+			, (SELECT MIN(ARTICLE_SEQ) FROM MC_ARTICLE WHERE BOARD_SEQ = #{type}) AS MINas
+		FROM MC_ARTICLE MA
+		LEFT OUTER JOIN (
+			SELECT 
+				ARTICLE_SEQ, TITLE 
+			FROM MC_ARTICLE 
+			WHERE BOARD_SEQ = #{type}
+		) AS PLS ON MA.ARTICLE_SEQ < PLS.ARTICLE_SEQ 
+		LEFT OUTER JOIN (
+			SELECT 
+				ARTICLE_SEQ, TITLE 
+			FROM MC_ARTICLE  
+			WHERE BOARD_SEQ = #{type} 
+		) AS MIS ON MA.ARTICLE_SEQ > MIS.ARTICLE_SEQ
+		WHERE MA.ARTICLE_SEQ = #{as}
+		ORDER BY PLS.ARTICLE_SEQ ASC, MIS.ARTICLE_SEQ DESC
+		LIMIT 1
+		]]>
+	</select>
+	
+	<!-- 조회수 + 1 -->
+	<update id="boardCount" parameterType="Map">
+		UPDATE mccms.MC_ARTICLE SET
+			VIEW_CNT = VIEW_CNT+1 
+		WHERE 
+			ARTICLE_SEQ = ${as}
+	</update>
+	
+	<!-- 1:1 문의 글쓰기 저장 -->
+	<insert id="boardInquiryRegister" parameterType="Map">
+		<selectKey keyProperty="article_seq" resultType="int" order="BEFORE">
+			SELECT IFNULL(MAX(ARTICLE_SEQ),0)+1 AS ARTICLE_SEQ FROM mccms.MC_ARTICLE
+		</selectKey>
+		INSERT INTO mccms.MC_ARTICLE (
+			ARTICLE_SEQ,
+			BOARD_SEQ,
+			TITLE,
+			CONTS,
+			IP,
+			REG_NM,
+			REG_ID,
+			REF_NUM,
+			REG_DT
+		) VALUES (
+			#{article_seq},
+			3,
+			#{title},
+			#{conts},
+			"0:0:0:0:0:0:0:1",
+			"TEST BOY",
+			"admin",
+			0,
+			now()
+		)
+	</insert>
+	
+	<select id="selectIntroBoard" parameterType="Map" resultType="mcmap">
+		<![CDATA[
+		SELECT * FROM mccms.MC_ARTICLE WHERE BOARD_SEQ = 1 AND NOTICE_YN = 'Y' AND DEL_YN = 'N'
+		]]>
+	</select>
+</mapper>

@@ -1,0 +1,225 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="Permit">
+	
+	<select id="menu_list" parameterType="Map" resultType="mcmap">
+		SELECT  
+			sg.CMS_MENU_SEQ, sg.PARENT_MENU_SEQ, sg.TITLE, sg.MENU_ORDER, sg.SITE_ID, sg.DEL_YN, sg.USE_YN,
+			sg2.MENU_LEVEL,
+			SYS_CONNECT_BY_PATH_MENU(sg.CMS_MENU_SEQ, '>') AS PAGE_NAVI,
+			sys_connect_by_path_menu_order(sg.CMS_MENU_SEQ, '_') AS order_menu_set,
+			b.ADD_YN, b.MOD_YN, b.VIEW_YN
+		FROM    (
+		        SELECT  start_with_connect_by_memu() AS PARENT_MENU_SEQ, @level AS MENU_LEVEL
+		        FROM    (
+		                SELECT  @start_with := ifnull(#{site_id}, '1'),
+		                        @id := @start_with,
+		                        @level := 0,
+		                        @rn := 0
+		                ) vars, MC_CMS_MENU
+		        WHERE   @id IS NOT NULL
+		) sg2
+		JOIN    MC_CMS_MENU sg
+		ON      sg.CMS_MENU_SEQ = sg2.PARENT_MENU_SEQ
+		LEFT OUTER JOIN (
+		    SELECT
+			d.CMS_MENU_SEQ, d.ADD_YN, d.MOD_YN, d.VIEW_YN
+		    FROM MC_MANAGE_AUTH c LEFT OUTER JOIN MC_MANAGE_AUTH_DETAIL d
+		    ON c.SEQ=d.PARENT_SEQ
+		    WHERE c.SEQ=ifnull(#{seq}, '-1')
+		) b
+		ON sg.CMS_MENU_SEQ=b.CMS_MENU_SEQ
+		ORDER BY order_menu_set
+	</select>
+	
+	<sql id="listWhere">
+		WHERE a.DEL_YN='N'
+		<if test="!(keyword == null or keyword == '')" >
+			<choose>
+				<when test="condition == 'title'.toString()">AND a.TITLE like CONCAT('%',#{keyword},'%')</when>
+			</choose>
+      	</if>
+		<if test="!(start_dt == null or start_dt == '') and !(end_dt == null or end_dt == '')" >
+			AND DATE_FORMAT(a.REG_DT, '%Y-%m-%d') BETWEEN #{start_dt} AND #{end_dt}
+      	</if>
+	</sql>
+	
+	<!-- <select id="list" parameterType="Map" resultType="mcmap">
+		SELECT 
+			A.*
+		FROM (
+			SELECT 
+				CAST(@ROWNUM:=@ROWNUM+1 AS SIGNED) AS RN, TB.*
+			FROM(
+				SELECT
+				    *
+				FROM MC_MANAGE_AUTH a
+				<include refid="listWhere"/>
+				ORDER BY SEQ DESC
+			) AS TB, 
+			(SELECT @ROWNUM:=0) AS R
+		)AS A
+		WHERE CEIL(RN/IFNULL(#{rows},10))=IFNULL(#{cpage},1)
+	</select> -->
+	<select id="list" parameterType="Map" resultType="mcmap">
+		SELECT A.*, TC.*
+		FROM 
+		  (
+		    SELECT CAST(@ROWNUM:=@ROWNUM+1 AS SIGNED) AS RN, TB.*
+		    FROM 
+		    (
+		     SELECT *
+		     FROM MC_MANAGE_AUTH A
+		     <include refid="listWhere"/>
+		     ORDER BY  SEQ DESC ) AS TB, 
+		     (SELECT @ROWNUM:=0) AS R 
+		  ) AS A LEFT OUTER JOIN
+		  (
+		    SELECT PARENT_SEQ, SITE_ID
+		      ,COUNT(CASE WHEN ADD_YN = 'Y' THEN 1 END) ADD_CNT
+		      ,COUNT(CASE WHEN MOD_YN = 'Y' THEN 1 END) MOD_CNT
+		      ,COUNT(CASE WHEN VIEW_YN = 'Y' THEN 1 END) VIEW_CNT
+		    FROM MC_MANAGE_AUTH_DETAIL
+		    GROUP BY PARENT_SEQ
+		  ) AS TC
+		ON 
+		A.SEQ=TC.PARENT_SEQ
+		WHERE CEIL(RN/IFNULL(#{rows},10))=IFNULL(#{cpage},1)
+	</select>
+	
+	<select id="pagination" parameterType="Map" resultType="mcmap">
+	    SELECT
+	        CEIL(COUNT(1)/IFNULL(#{rows}, 10)) TOTALPAGE,
+	        COUNT(1) TOTALCOUNT
+        FROM MC_MANAGE_AUTH a
+		<include refid="listWhere"/>
+	</select>
+	
+	<update id="modify" parameterType="Map">
+		UPDATE MC_MANAGE_AUTH SET
+			TITLE = 				#{title}
+			, MOD_ID = 				#{session_member_id}
+			, MOD_NM = 				#{session_member_nm}
+			, MOD_DT = 				SYSDATE()
+		WHERE SEQ = #{seq}
+	</update>
+	
+	<update id="write" parameterType="Map">
+		INSERT INTO MC_MANAGE_AUTH(
+			TITLE, REG_ID, REG_NM, REG_DT
+		)VALUES(
+			#{title}, #{session_member_id}, #{session_member_nm}, sysdate()
+		)
+		<selectKey keyProperty="seq" resultType="int" order="AFTER">
+			SELECT LAST_INSERT_ID()
+		</selectKey>
+	</update>
+	
+	<update id="insert_permit" parameterType="Map">
+		INSERT INTO MC_MANAGE_AUTH_DETAIL(
+			SITE_ID, PARENT_SEQ, CMS_MENU_SEQ, ORDER_SEQ, ADD_YN, MOD_YN, VIEW_YN
+		)VALUES(
+			#{site_id}, #{parent_seq}, #{cms_menu_seq}, #{order_seq}, IFNULL(#{add_yn}, 'N'), IFNULL(#{mod_yn}, 'N'), IFNULL(#{view_yn}, 'N')
+		)
+	</update>
+	
+	<select id="view" parameterType="Map" resultType="mcmap">
+		SELECT
+			*
+		FROM MC_MANAGE_AUTH 
+		WHERE SEQ = #{seq}
+	</select>
+	
+	<update id="permit_del_all" parameterType="Map">
+		DELETE FROM MC_MANAGE_AUTH_DETAIL WHERE PARENT_SEQ = #{seq}
+		<if test="!(site_id == null or site_id == '')">
+		AND SITE_ID=#{site_id}
+		</if>
+	</update>
+	
+	<update id="del" parameterType="Map">
+		DELETE FROM MC_MANAGE_AUTH WHERE SEQ = #{seq} 
+	</update>
+	
+	<select id="hasMemberPermit" parameterType="Map" resultType="int">
+		SELECT COUNT(1) AS CNT FROM MC_MANAGE_AUTH_DETAIL WHERE MEMBER_ID=#{member_id}
+	</select>
+	
+	<select id="memberPermitList1" parameterType="Map" resultType="mcmap">
+		SELECT  
+			sg.CMS_MENU_SEQ, sg.PARENT_MENU_SEQ, sg.TITLE, sg.MENU_ORDER, sg.SITE_ID, sg.DEL_YN, sg.USE_YN,
+			sg2.MENU_LEVEL,
+			SYS_CONNECT_BY_PATH_MENU(sg.CMS_MENU_SEQ, '>') AS PAGE_NAVI,
+			sys_connect_by_path_menu_order(sg.CMS_MENU_SEQ, '_') AS order_menu_set,
+			b.ADD_YN, b.MOD_YN, b.VIEW_YN
+		FROM    (
+		        SELECT  start_with_connect_by_memu() AS PARENT_MENU_SEQ, @level AS MENU_LEVEL
+		        FROM    (
+		                SELECT  @start_with := ifnull(#{site_id}, '1'),
+		                        @id := @start_with,
+		                        @level := 0,
+		                        @rn := 0
+		                ) vars, MC_CMS_MENU
+		        WHERE   @id IS NOT NULL
+		) sg2
+		JOIN    MC_CMS_MENU sg
+		ON      sg.CMS_MENU_SEQ = sg2.PARENT_MENU_SEQ
+		LEFT OUTER JOIN MC_MANAGE_AUTH_DETAIL b
+		ON sg.CMS_MENU_SEQ=b.CMS_MENU_SEQ AND b.MEMBER_ID=#{member_id}
+		ORDER BY order_menu_set
+	</select>
+	
+	<select id="memberPermitList2" parameterType="Map" resultType="mcmap">
+		SELECT  
+			sg.CMS_MENU_SEQ, sg.PARENT_MENU_SEQ, sg.TITLE, sg.MENU_ORDER, sg.SITE_ID, sg.DEL_YN, sg.USE_YN,
+			sg2.MENU_LEVEL,
+			SYS_CONNECT_BY_PATH_MENU(sg.CMS_MENU_SEQ, '>') AS PAGE_NAVI,
+			sys_connect_by_path_menu_order(sg.CMS_MENU_SEQ, '_') AS order_menu_set,
+			b.ADD_YN, b.MOD_YN, b.VIEW_YN
+		FROM    (
+		        SELECT  start_with_connect_by_memu() AS PARENT_MENU_SEQ, @level AS MENU_LEVEL
+		        FROM    (
+		                SELECT  @start_with := ifnull(#{site_id}, '1'),
+		                        @id := @start_with,
+		                        @level := 0,
+		                        @rn := 0
+		                ) vars, MC_CMS_MENU
+		        WHERE   @id IS NOT NULL
+		) sg2
+		JOIN    MC_CMS_MENU sg
+		ON      sg.CMS_MENU_SEQ = sg2.PARENT_MENU_SEQ
+		LEFT OUTER JOIN (
+		    SELECT
+			d.CMS_MENU_SEQ, d.ADD_YN, d.MOD_YN, d.VIEW_YN
+		    FROM MC_MANAGE_AUTH c LEFT OUTER JOIN MC_MANAGE_AUTH_DETAIL d
+		    ON c.SEQ=d.PARENT_SEQ
+		    WHERE c.SEQ=(SELECT MANAGE_SEQ FROM MC_GROUP WHERE GROUP_SEQ = (SELECT GROUP_SEQ FROM MC_MEMBER WHERE MEMBER_ID=#{member_id}))
+		) b
+		ON sg.CMS_MENU_SEQ=b.CMS_MENU_SEQ
+		ORDER BY order_menu_set
+	</select>
+	
+	<update id="permit_del_member_all" parameterType="Map">
+		DELETE FROM MC_MANAGE_AUTH_DETAIL WHERE MEMBER_ID = #{member_id} 
+		<if test="!(site_id == null or site_id == '')">
+		AND SITE_ID=#{site_id}
+		</if>
+	</update>
+	
+	<update id="insert_permit_member" parameterType="Map">
+		INSERT INTO MC_MANAGE_AUTH_DETAIL(
+			SITE_ID, MEMBER_ID, CMS_MENU_SEQ, ADD_YN, MOD_YN, VIEW_YN
+		)VALUES(
+			#{site_id}, #{member_id}, #{cms_menu_seq}, ifnull(#{add_yn}, 'N'), ifnull(#{mod_yn}, 'N'), ifnull(#{view_yn}, 'N')
+		)
+	</update>
+	
+	<update id="permit_del_group_member_all" parameterType="Map">
+		DELETE FROM MC_MANAGE_AUTH_DETAIL WHERE MEMBER_ID IN (SELECT MEMBER_ID FROM MC_MEMBER WHERE GROUP_SEQ =#{group_seq})
+	</update>
+	
+	<update id="permit_del_manage_member_all" parameterType="Map">
+		DELETE FROM MC_MANAGE_AUTH_DETAIL WHERE MEMBER_ID IN (SELECT MEMBER_ID FROM MC_MEMBER WHERE GROUP_SEQ IN (SELECT GROUP_SEQ FROM MC_GROUP WHERE MANAGE_SEQ=#{seq}))
+	</update>
+	
+</mapper>

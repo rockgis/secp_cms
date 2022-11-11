@@ -1,0 +1,123 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="Group">
+	<select id="list" parameterType="Map" resultType="mcmap">
+		SELECT
+			GROUP_SEQ, GROUP_NM, PARENT_SEQ, USE_YN, REG_DT, ORDER_SEQ, LEVEL, DEL_YN, MANAGE_SEQ,
+			RESPONSIBILITIES,
+			FN_GET_SPLIT(TEL, 1, '-', '') as TEL1, FN_GET_SPLIT(TEL, 2, '-', '') as TEL2, FN_GET_SPLIT(TEL, 3, '-', '') as TEL3,
+			FN_GET_SPLIT(FAX, 1, '-', '') as FAX1, FN_GET_SPLIT(FAX, 2, '-', '') as FAX2, FN_GET_SPLIT(FAX, 3, '-', '') as FAX3
+		FROM MC_GROUP a
+		START WITH PARENT_SEQ = nvl(#{start_group_seq}, 0)
+		CONNECT BY PRIOR GROUP_SEQ = PARENT_SEQ
+        ORDER SIBLINGS BY ORDER_SEQ
+	</select>
+	
+	<select id="view" parameterType="Map" resultType="mcmap">
+		SELECT
+			GROUP_SEQ, GROUP_NM, PARENT_SEQ, USE_YN, REG_DT, ORDER_SEQ, DEL_YN, MANAGE_SEQ,
+			RESPONSIBILITIES,
+			FN_GET_SPLIT(TEL, 1, '-', '') as TEL1, FN_GET_SPLIT(TEL, 2, '-', '') as TEL2, FN_GET_SPLIT(TEL, 3, '-', '') as TEL3,
+			FN_GET_SPLIT(FAX, 1, '-', '') as FAX1, FN_GET_SPLIT(FAX, 2, '-', '') as FAX2, FN_GET_SPLIT(FAX, 3, '-', '') as FAX3
+		FROM MC_GROUP a
+		WHERE a.GROUP_SEQ = #{group_seq}
+	</select>
+	
+	<update id="write" parameterType="Map">
+		INSERT INTO MC_GROUP(
+			GROUP_SEQ, GROUP_NM, PARENT_SEQ, TEL, FAX, RESPONSIBILITIES, USE_YN, MANAGE_SEQ,
+			REG_NM, REG_ID, REG_DT, DEL_YN, ORDER_SEQ
+		 )
+		 VALUES(
+			SEQ_MC_GROUP.NEXTVAL, #{group_nm}, nvl(#{parent_seq}, '0'), #{tel}, #{fax}, #{responsibilities}, #{use_yn}, #{manage_seq},
+			#{session_member_nm}, #{session_member_id}, sysdatetime, 'N',
+			(SELECT NVL(MAX(ORDER_SEQ),0)+1 FROM MC_GROUP WHERE parent_seq=nvl(#{parent_seq}, '0'))
+		 )
+	</update>
+	
+	<update id="modify" parameterType="Map">
+		UPDATE MC_GROUP SET
+			GROUP_NM = #{group_nm}
+			,TEL = #{tel}
+			,FAX = #{fax}
+			,RESPONSIBILITIES = #{responsibilities}
+			,USE_YN = #{use_yn}
+			,MANAGE_SEQ = (case #{manage_seq} when '' then null else #{manage_seq} end)
+			,MOD_ID = #{session_member_id}
+			,MOD_NM = #{session_member_nm}
+			,MOD_DT = sysdatetime
+		WHERE GROUP_SEQ=#{group_seq}
+	</update>
+	
+	<update id="del" parameterType="Map">
+		UPDATE MC_GROUP SET
+			DEL_YN = 'Y'
+			,DEL_ID = #{session_member_id}
+			,DEL_NM = #{session_member_nm}
+			,DEL_DT = sysdatetime
+		WHERE GROUP_SEQ=#{group_seq}
+	</update>
+	
+	<update id="del_member" parameterType="Map">
+		UPDATE MC_MEMBER SET
+			DEL_YN = 'Y'
+			,DEL_ID = #{session_member_id}
+			,DEL_NM = #{session_member_nm}
+			,DEL_DT = sysdatetime
+		WHERE GROUP_SEQ in (
+            SELECT 
+                GROUP_SEQ
+            FROM MC_GROUP 
+            START WITH GROUP_SEQ = #{group_seq}
+            CONNECT BY PRIOR  GROUP_SEQ = PARENT_SEQ and del_yn='N'
+		)
+	</update>
+	
+	<update id="move_member" parameterType="Map">
+		UPDATE MC_MEMBER SET
+			GROUP_SEQ = #{move_group_seq}
+			,MOD_ID = #{session_member_id}
+			,MOD_NM = #{session_member_nm}
+			,MOD_DT = sysdatetime
+		WHERE GROUP_SEQ in (
+            SELECT 
+                GROUP_SEQ
+            FROM MC_GROUP 
+            START WITH GROUP_SEQ = #{group_seq}
+            CONNECT BY PRIOR  GROUP_SEQ = PARENT_SEQ and del_yn='N'
+		)
+	</update>
+	
+	<select id="userAuthCheck" parameterType="Map" resultType="mcmap">
+		SELECT
+			GROUP_SEQ 
+		FROM
+			MC_GROUP 
+		START WITH GROUP_SEQ = #{group_seq}
+		CONNECT BY PRIOR  GROUP_SEQ = PARENT_SEQ AND DEL_YN='N'
+	</select>
+	
+	<update id="updateGroupOrder" parameterType="Map">
+		UPDATE MC_GROUP SET
+			ORDER_SEQ=#{order_seq}
+			, PARENT_SEQ=#{parent_seq}
+			, MOD_ID = #{session_member_id}
+			, MOD_NM = #{session_member_nm}
+			, MOD_DT = sysdatetime
+		WHERE GROUP_SEQ = #{group_seq} 
+	</update>
+	
+	<select id="staffList" parameterType="Map" resultType="mcmap">
+		SELECT 
+			a.SITE_ID, a.TITLE, b.CMS_MENU_SEQ
+		FROM MC_CMS_MENU a LEFT OUTER JOIN mc_cms_staff_group b
+		ON a.cms_menu_seq=b.cms_menu_seq
+		WHERE b.group_seq=#{group_seq} 
+	</select>
+	
+	<delete id="group_staff_delete" parameterType="Map">
+		DELETE FROM MC_CMS_STAFF_GROUP
+		WHERE GROUP_SEQ=#{group_seq} 
+	</delete>
+	
+</mapper>

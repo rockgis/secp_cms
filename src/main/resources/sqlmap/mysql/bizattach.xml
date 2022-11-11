@@ -1,0 +1,127 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="bizattach">
+	<insert id="insert" parameterType="Map">
+		INSERT INTO TN_FILE_MNG(
+			BIZ_YR
+			, BIZ_NO
+			, BIZ_CYCL
+			, RCEPT_SN
+			, CHG_SN
+			, FILE_PATH
+			, FILE_NM
+			, ORGNL_FILE_NM
+			, FILE_SZ
+			, FILE_EXTN
+			, FILE_SE
+			, USE_YN
+			, REG_DT
+			, RGTR
+			, MDFCN_DT
+			, MDFR
+		)VALUES(
+			#{BIZ_YR}
+			, #{BIZ_NO}
+			, #{BIZ_CYCL}
+			, #{RCEPT_SN}
+			, 0
+			, #{FILE_PATH}
+			, #{FILE_NM}
+			, #{ORGNL_FILE_NM}
+			, #{FILE_SZ}
+			, #{FILE_EXTN}
+			, #{FILE_SE}
+			, 'Y'
+			, DATE_FORMAT(now(),'%Y%m%d%H%i%s')
+			, #{RGTR}
+			, DATE_FORMAT(now(),'%Y%m%d%H%i%s')
+			, #{MDFR}
+		)
+
+	</insert>
+	
+	
+	<update id="update" parameterType="Map">
+		UPDATE TN_FILE_MNG SET
+		<trim prefixOverrides=",">
+				<if test="!( CHG_SN == null or CHG_SN == '')">
+					CHG_SN=#{CHG_SN}
+				</if>
+				<if test="!( FILE_PATH == null or FILE_PATH == '')">
+					,FILE_PATH=#{FILE_PATH}
+				</if>
+				<if test="!( FILE_NM == null or FILE_NM == '')">
+					,FILE_NM=#{FILE_NM}
+				</if>
+				<if test="!( ORGNL_FILE_NM == null or ORGNL_FILE_NM == '')">
+					,ORGNL_FILE_NM=#{ORGNL_FILE_NM}
+				</if>
+				<if test="!( FILE_SZ == null or FILE_SZ == '')">
+					,FILE_SZ=#{FILE_SZ}
+				</if>
+				<if test="!( FILE_EXTN == null or FILE_EXTN == '')">
+					,FILE_EXTN=#{FILE_EXTN}
+				</if>
+				<if test="!( FILE_SE == null or FILE_SE == '')">
+					,FILE_SE=#{FILE_SE}
+				</if>
+				<if test="!( USE_YN == null or USE_YN == '')">
+					,USE_YN=#{USE_YN}
+				</if>
+				<if test="!( RGTR == null or RGTR == '')">
+					,RGTR=#{RGTR}
+				</if>
+					,MDFCN_DT=DATE_FORMAT(now(),'%Y%m%d%H%i%s')
+					
+				<if test="!( MDFR == null or MDFR == '')">
+					,MDFR=#{MDFR}
+				</if>
+		</trim>		
+		WHERE 1=1
+		AND BIZ_YR=#{BIZ_YR} AND BIZ_NO=#{BIZ_NO} AND BIZ_CYCL=#{BIZ_CYCL} AND FILE_SN=#{FILE_SN}
+		<if test="!( CHG_SN == null or CHG_SN == '')">
+			AND	CHG_SN=#{CHG_SN}
+		</if>
+
+
+	</update>
+	
+	<select id="select" parameterType="Map" resultType="mcmap">
+		SELECT 
+			BIZ_YR
+			, BIZ_NO
+			, BIZ_CYCL
+			, FILE_SN
+			, CHG_SN
+			, FILE_PATH
+			, FILE_NM
+			, ORGNL_FILE_NM
+			, FILE_SZ
+			, FILE_EXTN
+			, FILE_SE
+			, USE_YN
+			, REG_DT
+			, RGTR
+			, MDFCN_DT
+			, MDFR
+		FROM TN_FILE_MNG
+		WHERE 1=1
+		AND BIZ_YR = #{BIZ_YR} AND BIZ_NO=#{BIZ_NO} AND BIZ_CYCL=#{BIZ_CYCL} AND USE_YN='Y'
+		<if test="!( CHG_SN == null or CHG_SN == '')">
+			AND	CHG_SN=#{CHG_SN}
+		</if>
+	</select>
+	
+	
+	
+	<delete id="delete" parameterType="Map">
+		DELETE FROM TN_FILE_MNG WHERE 1=1 AND BIZ_YR = #{BIZ_YR} AND BIZ_NO=#{BIZ_NO} AND BIZ_CYCL=#{BIZ_CYCL} AND FILE_SN=#{FILE_SN}
+		<if test="!( CHG_SN == null or CHG_SN == '')">
+			AND	CHG_SN=#{CHG_SN}
+		</if>
+	</delete>
+	
+	
+	
+    
+</mapper>

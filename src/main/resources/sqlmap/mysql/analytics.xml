@@ -1,0 +1,252 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="Analytics">
+	
+	<select id="has_ymd" parameterType="Map" resultType="int">
+		SELECT COUNT(1) AS CNT FROM MC_ANALYTICS WHERE SESSION_ID=#{session_id} AND TITLE = #{title} AND YMD=#{ymd}
+		<if test="!(site_id == null or site_id == '')">
+			AND SITE_ID=#{site_id}
+		</if>
+	</select>
+	
+	<update id="add_weblog" parameterType="Map">	
+		INSERT INTO MC_ANALYTICS(
+			YMD, TITLE, REQUEST_URI, QUERY_STRING, BROWSER, OS, REFERER, IP, YYYY, MM, DD, HH, LOCALE, MEMBER_ID, SESSION_ID, SITE_ID
+		) VALUES(
+			#{ymd}, #{title}, #{request_uri}, #{query_string}, #{browser}, #{os}, #{referer}, #{session_ip}, #{yyyy}, #{mm}, #{dd}, #{hh}, #{locale}, #{member_id}, #{session_id}, #{site_id}
+		)
+	</update>
+	
+	<update id="plus_weblog" parameterType="Map">	
+		UPDATE MC_ANALYTICS SET
+			CNT = CNT+1
+		WHERE SESSION_ID=#{session_id} AND TITLE = #{title} AND YMD=#{ymd} 
+	</update>
+	
+	<select id="day" parameterType="Map" resultType="mcmap">
+		SELECT
+			CONCAT(a.dd, ' 일') AS dis, IFNULL(d.visitant_cnt, 0) AS visitant_cnt, IFNULL(b.visit_cnt, 0) AS visit_cnt, IFNULL(c.view_cnt, 0) AS view_cnt
+		FROM (
+			SELECT 
+				DATE_FORMAT(d, '%Y') yyyy, DATE_FORMAT(d, '%m') mm ,DATE_FORMAT(d, '%d') dd
+			FROM mc_date 
+			WHERE d BETWEEN #{start_dt} AND #{end_dt}
+		) a
+		LEFT OUTER JOIN ( 
+			SELECT
+				yyyy, mm, dd, hh, COUNT(1) AS visit_cnt
+			FROM MC_ANALYTICS
+			WHERE CONCAT(yyyy,'-',mm,'-',dd) BETWEEN #{start_dt} AND #{end_dt}
+				<if test="!(site_id == null or site_id == '')">
+					AND SITE_ID=#{site_id}
+				</if>			
+		) b
+        ON a.yyyy=b.yyyy AND a.mm=b.mm AND a.dd=b.dd
+		LEFT OUTER JOIN ( 
+			SELECT
+				yyyy,mm,dd, SUM(cnt) AS view_cnt
+			FROM(        
+				SELECT 
+					yyyy, mm, dd, SUM(cnt) AS cnt
+				FROM MC_ANALYTICS
+				WHERE CONCAT(yyyy,'-',mm,'-',dd) BETWEEN #{start_dt} AND #{end_dt}
+				<if test="!(site_id == null or site_id == '')">
+					AND SITE_ID=#{site_id}
+				</if>				
+				GROUP BY yyyy, mm, dd, session_id
+			) s 
+			GROUP BY yyyy,mm,dd                
+		) c
+		ON a.yyyy=c.yyyy AND a.mm=c.mm AND a.dd=c.dd
+		LEFT OUTER JOIN ( 
+			SELECT 
+				yyyy,mm,dd, COUNT(1) AS visitant_cnt
+			FROM(
+				SELECT 
+					yyyy,mm,dd,hh, session_id
+				FROM MC_ANALYTICS
+				WHERE CONCAT(yyyy,'-',mm,'-',dd) BETWEEN #{start_dt} AND #{end_dt}
+				<if test="!(site_id == null or site_id == '')">
+					AND SITE_ID=#{site_id}
+				</if>				
+				GROUP BY yyyy, mm, dd, hh, session_id
+			) g
+			GROUP BY yyyy, mm, dd
+		) d
+		ON a.yyyy=c.yyyy AND a.mm=c.mm AND a.dd=c.dd        	
+	</select>
+	
+	<select id="days" parameterType="Map" resultType="mcmap">
+		SELECT
+			CONCAT(a.dd, ' 일') AS dis, IFNULL(b.visit_cnt, 0) AS visit_cnt, IFNULL(b.view_cnt, 0) AS view_cnt, IFNULL(c.visitant_cnt, 0) AS visitant_cnt
+		FROM (
+			SELECT 
+				DATE_FORMAT(d, '%Y') yyyy, DATE_FORMAT(d, '%m') mm ,DATE_FORMAT(d, '%d') dd
+			FROM MC_DATE 
+			WHERE d BETWEEN #{start_dt} AND #{end_dt}
+		) a
+		LEFT OUTER JOIN ( 
+			SELECT
+				yyyy,mm,dd, SUM(visit_cnt) AS visit_cnt, SUM(cnt) AS view_cnt
+			FROM(
+				SELECT 
+					yyyy,mm,dd, COUNT(1) AS visit_cnt, SUM(cnt) AS cnt
+				FROM MC_ANALYTICS
+				WHERE CONCAT(yyyy,'-',mm,'-',dd) BETWEEN #{start_dt} AND #{end_dt}
+				<if test="!(site_id == null or site_id == '')">
+					AND SITE_ID=#{site_id}
+				</if>
+				GROUP BY yyyy,mm,dd,session_id
+			)s 
+			GROUP BY yyyy,mm,dd
+		) b
+		ON a.yyyy=b.yyyy AND a.mm=b.mm AND a.dd=b.dd
+		LEFT OUTER JOIN ( 
+			SELECT 
+				yyyy,mm,dd, COUNT(1) AS visitant_cnt
+			FROM(
+				SELECT 
+					yyyy,mm,dd,hh, session_id
+				FROM MC_ANALYTICS
+				WHERE CONCAT(yyyy,'-',mm,'-',dd) BETWEEN #{start_dt} AND #{end_dt}
+				<if test="!(site_id == null or site_id == '')">
+					AND SITE_ID=#{site_id}
+				</if>
+				GROUP BY yyyy,mm,dd,hh,session_id
+			) g
+			GROUP BY yyyy,mm,dd
+		) c
+		ON a.yyyy=c.yyyy AND a.mm=c.mm AND a.dd=c.dd 
+	</select>	
+	
+	<select id="time" parameterType="Map" resultType="mcmap">
+		SELECT
+			CONCAT(a.hh, ' 시') AS dis, IFNULL(b.visit_cnt, 0) AS visit_cnt, IFNULL(b.view_cnt, 0) AS view_cnt, IFNULL(c.visitant_cnt, 0) AS visitant_cnt
+		FROM (
+			SELECT hh FROM mc_analytics_hh
+		) a
+		LEFT OUTER JOIN ( 
+			SELECT
+				hh, COUNT(1) AS visit_cnt, SUM(cnt) AS view_cnt
+			FROM(
+				SELECT 
+					hh, SUM(cnt) AS cnt
+				FROM MC_ANALYTICS
+				WHERE CONCAT(yyyy,'-',mm,'-',dd) BETWEEN #{start_dt} AND #{end_dt}
+				<if test="!(site_id == null or site_id == '')">
+					AND SITE_ID=#{site_id}
+				</if>
+				GROUP BY hh,session_id
+			)s 
+			GROUP BY hh
+		) b
+		ON a.hh=b.hh
+		LEFT OUTER JOIN ( 
+			SELECT 
+				hh, SUM(visitant_cnt) AS visitant_cnt
+			FROM(
+				SELECT 
+					yyyy,mm,dd,hh, session_id, COUNT(1) AS visitant_cnt
+				FROM MC_ANALYTICS
+				WHERE CONCAT(yyyy,'-',mm,'-',dd) BETWEEN #{start_dt} AND #{end_dt}
+				<if test="!(site_id == null or site_id == '')">
+					AND SITE_ID=#{site_id}
+				</if>
+				GROUP BY yyyy,mm,dd,hh,session_id
+			) g
+			GROUP BY hh
+		) c
+		ON a.hh=c.hh
+	</select>
+	
+	<select id="browser" parameterType="Map" resultType="mcmap">
+		SELECT
+			browser, COUNT(1) AS cnt
+		FROM(
+			SELECT		
+				browser
+			FROM MC_ANALYTICS 
+			WHERE CONCAT(yyyy,'-',mm,'-',dd) BETWEEN #{start_dt} AND #{end_dt}
+				<if test="!(site_id == null or site_id == '')">
+					AND SITE_ID=#{site_id}
+				</if>
+			GROUP BY yyyy,mm,dd,browser,session_id
+		)a
+		GROUP BY browser
+	</select>
+	
+	<select id="os" parameterType="Map" resultType="mcmap">
+		SELECT
+			os, COUNT(1) AS cnt
+		FROM(
+			SELECT		
+				os
+			FROM MC_ANALYTICS 
+			WHERE CONCAT(yyyy,'-',mm,'-',dd) BETWEEN #{start_dt} AND #{end_dt}
+				<if test="!(site_id == null or site_id == '')">
+					AND SITE_ID=#{site_id}
+				</if>
+			GROUP BY yyyy,mm,dd,os,session_id
+		)a
+		GROUP BY os
+	</select>
+	
+	<sql id="listWhere">
+		WHERE CONCAT(yyyy,'-',mm,'-',dd) BETWEEN #{start_dt} AND #{end_dt}
+		<if test="!(site_id == null or site_id == '')">
+			AND SITE_ID=#{site_id}
+		</if>
+		<if test="!(keyword == null or keyword == '')" >
+			<choose>
+				<when test="condition == 'title'.toString()">AND TITLE like CONCAT('%',#{keyword},'%')</when>
+				<when test="condition == 'request_uri'.toString()">AND REQUEST_URI like CONCAT('%',#{keyword},'%')</when>
+			</choose>
+      	</if>
+	</sql>
+	
+	<select id="total_visit_cnt" resultType="int">
+		SELECT IFNULL(SUM(cnt),0) AS cnt FROM mc_analytics WHERE CONCAT(yyyy,'-',mm,'-',dd) BETWEEN #{start_dt} AND #{end_dt}
+				<if test="!(site_id == null or site_id == '')">
+					AND SITE_ID=#{site_id}
+				</if>
+	</select>
+	
+	<select id="list" parameterType="Map" resultType="mcmap">
+		SELECT A.*
+		FROM
+		(
+		SELECT CAST(@ROWNUM:=@ROWNUM+1 AS SIGNED) AS RN, TB.*
+		FROM(
+			SELECT 
+				title, MIN(request_uri) as request_uri, SUM(cnt) as cnt, SUM(cnt)/#{total_visit_cnt, javaType=int}*100 AS per
+			FROM MC_ANALYTICS
+			<include refid="listWhere"/>
+			GROUP BY title
+			<choose>
+				<when test="!(sort_nm == null or sort_nm == '')">ORDER BY 
+					<choose>
+						<when test="sort_nm == 'title'.toString()"> TITLE </when>
+						<when test="sort_nm == 'request_uri'.toString()"> REQUEST_URI </when>
+						<when test="sort_nm == 'cnt'.toString()"> CNT </when>
+					</choose> 
+					<choose>
+						<when test="sort == 'desc'.toString()"> DESC </when>
+						<when test="sort == 'asc'.toString()"> ASC </when>
+					</choose>
+				</when>
+				<otherwise>ORDER BY cnt DESC</otherwise>
+			</choose>
+		) AS TB, 
+		(SELECT @ROWNUM:=0) AS R
+		)AS A
+		WHERE CEIL(RN/IFNULL(#{rows},10))=IFNULL(#{cpage},1)
+	</select>
+	
+	<select id="pagination" parameterType="Map" resultType="mcmap">
+	    SELECT
+	        CEIL(COUNT(1)/IFNULL(#{rows}, 10)) TOTALPAGE,
+	        COUNT(1) TOTALCOUNT
+	    FROM (SELECT title, MIN(request_uri) AS request_uri  FROM MC_ANALYTICS <include refid="listWhere"/> GROUP BY title) a
+	</select>
+	
+</mapper>

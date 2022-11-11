@@ -1,0 +1,426 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="Dashboard">
+	
+	<select id="menu_status" parameterType="Map" resultType="mcmap">
+		SELECT
+			*
+		FROM(
+			SELECT
+				pt.MENU_LEVEL, pt.MENU_TYPE, IFNULL(SUM(USE_YN), 0) AS USE_CNT, SUM(pt.LEVEL_CNT) AS LEVEL_CNT
+			FROM(
+				SELECT
+					R1.R1 AS MENU_LEVEL, R1.R2 AS MENU_TYPE, USE_YN, IFNULL(R2.LEVEL_CNT, 0) AS LEVEL_CNT
+				FROM (
+					SELECT 1 AS R1, 1 AS R2
+					UNION ALL SELECT 1 AS R1, 2 AS R2
+					UNION ALL SELECT 1 AS R1, 3 AS R2
+					UNION ALL SELECT 1 AS R1, 4 AS R2
+					UNION ALL SELECT 1 AS R1, 5 AS R2
+					UNION ALL SELECT 2 AS R1, 1 AS R2
+					UNION ALL SELECT 2 AS R1, 2 AS R2
+					UNION ALL SELECT 2 AS R1, 3 AS R2
+					UNION ALL SELECT 2 AS R1, 4 AS R2
+					UNION ALL SELECT 2 AS R1, 5 AS R2
+					UNION ALL SELECT 3 AS R1, 1 AS R2
+					UNION ALL SELECT 3 AS R1, 2 AS R2
+					UNION ALL SELECT 3 AS R1, 3 AS R2
+					UNION ALL SELECT 3 AS R1, 4 AS R2
+					UNION ALL SELECT 3 AS R1, 5 AS R2
+					UNION ALL SELECT 4 AS R1, 1 AS R2
+					UNION ALL SELECT 4 AS R1, 2 AS R2
+					UNION ALL SELECT 4 AS R1, 3 AS R2
+					UNION ALL SELECT 4 AS R1, 4 AS R2
+					UNION ALL SELECT 4 AS R1, 5 AS R2
+					UNION ALL SELECT 5 AS R1, 1 AS R2
+					UNION ALL SELECT 5 AS R1, 2 AS R2
+					UNION ALL SELECT 5 AS R1, 3 AS R2
+					UNION ALL SELECT 5 AS R1, 4 AS R2
+					UNION ALL SELECT 5 AS R1, 5 AS R2
+				) R1 LEFT OUTER JOIN (		
+						SELECT
+							MENU_LEVEL, MENU_TYPE, SUM(USE_YN) AS USE_YN, COUNT(MENU_LEVEL) AS LEVEL_CNT
+						FROM(
+							SELECT  
+								CASE WHEN sg.USE_YN='Y' AND sg.DEL_YN='N' THEN 1 ELSE 0 END AS USE_YN, sg.MENU_TYPE,
+								sg2.MENU_LEVEL,
+								SUBSTR(SYS_CONNECT_BY_PATH_MENU(sg.CMS_MENU_SEQ, '>'), 2) AS PAGE_NAVI,
+								sys_connect_by_path_menu_order(sg.CMS_MENU_SEQ, '_') AS order_menu_set
+							FROM    (
+								SELECT  start_with_connect_by_memu() AS PARENT_MENU_SEQ, @level AS MENU_LEVEL
+								FROM    (
+									SELECT  @start_with := ifnull(#{site_id}, '1'),
+										@id := @start_with,
+										@level := 0,
+										@rn := 0
+									) vars, MC_CMS_MENU
+								WHERE   @id IS NOT NULL
+								) sg2
+							JOIN    MC_CMS_MENU sg
+							ON      sg.CMS_MENU_SEQ = sg2.PARENT_MENU_SEQ
+						) T1
+						GROUP BY MENU_LEVEL, MENU_TYPE
+				) R2
+				ON R1.R1=R2.MENU_LEVEL
+					AND R1.R2=R2.MENU_TYPE
+			)pt
+			GROUP BY MENU_LEVEL, MENU_TYPE WITH ROLLUP
+		)pt1
+		WHERE MENU_LEVEL IS NOT NULL
+		ORDER BY MENU_LEVEL IS NULL, MENU_LEVEL, MENU_TYPE, MENU_TYPE IS NULL DESC
+	</select>
+	
+	<select id="visit_cnt" parameterType="Map" resultType="int">
+        SELECT
+			COUNT(1) as CNT
+		FROM MC_ANALYTICS
+		WHERE 1=1
+		<if test="!(start_dt == null or start_dt == '')" >
+		<![CDATA[
+		AND YMD >= #{start_dt} AND YMD <= #{end_dt}
+		]]>
+		</if>
+		<if test="!(site_id == null or site_id == '')" >
+		AND SITE_ID = #{site_id}
+		</if>
+	</select>
+	
+	<select id="latest_article" parameterType="Map" resultType="mcmap">
+		SELECT
+		  PT1.*
+		FROM (
+		  SELECT
+		    CAST(@ROWNUM:=@ROWNUM+1 AS SIGNED) AS RN,
+		    T1.*
+		  FROM (
+		    SELECT
+		      A.ARTICLE_SEQ,
+		      A.BOARD_SEQ,
+		      C.CMS_MENU_SEQ,
+		      C.PARENT_MENU_SEQ,
+		      B.BOARD_TYPE,
+		      B.BOARD_NM,
+		      A.TITLE,
+		      DATE_FORMAT(A.REG_DT, '%Y-%m-%d') AS REG_DT,
+		      A.REG_NM
+		    FROM
+		      MC_ARTICLE A LEFT OUTER JOIN MC_BOARD B
+		      ON A.BOARD_SEQ = B.BOARD_SEQ
+		      JOIN MC_CMS_MENU C
+		      ON A.BOARD_SEQ = C.BOARD_SEQ
+		    WHERE A.DEL_YN = 'N'
+		      AND B.DEL_YN = 'N'
+		      AND C.DEL_YN = 'N'
+		      AND C.SITE_ID = #{site_id}
+		      ORDER BY A.REG_DT DESC
+		    ) T1, (SELECT @ROWNUM:=0) TMP
+		) PT1
+		<![CDATA[
+		WHERE RN <= IFNULL(#{rows, jdbcType=INTEGER},10)
+		]]>
+	</select>
+	
+	<select id="popular_article" parameterType="Map" resultType="mcmap">
+		SELECT
+		  PT1.*
+		FROM (
+		  SELECT
+		    CAST(@ROWNUM:=@ROWNUM+1 AS SIGNED) AS RN,
+		    T1.*
+		  FROM (
+		    SELECT
+		      A.ARTICLE_SEQ,
+		      A.BOARD_SEQ,
+		      C.CMS_MENU_SEQ,
+		      C.PARENT_MENU_SEQ,
+		      B.BOARD_TYPE,
+		      B.BOARD_NM,
+		      A.TITLE,
+		      A.VIEW_CNT,
+		      DATE_FORMAT(A.REG_DT, '%Y-%m-%d') AS REG_DT,
+		      A.REG_NM AS REG_NM
+		    FROM
+		      MC_ARTICLE A LEFT OUTER JOIN MC_BOARD B
+		      ON A.BOARD_SEQ = B.BOARD_SEQ
+		      JOIN MC_CMS_MENU C
+		      ON A.BOARD_SEQ = C.BOARD_SEQ
+		    WHERE A.DEL_YN = 'N'
+		      AND B.DEL_YN = 'N'
+		      AND C.DEL_YN = 'N'
+		      AND C.SITE_ID = #{site_id}
+		      ORDER BY A.VIEW_CNT DESC
+		    ) T1, (SELECT @ROWNUM:=0) TMP
+		) PT1
+		<![CDATA[
+		WHERE RN <= IFNULL(#{rows, jdbcType=INTEGER},5)
+		]]>
+	</select>
+	
+	<select id="member_join_status" parameterType="Map" resultType="mcmap">
+		SELECT
+			SUM(TODAY_CNT) AS TODAY_CNT,
+			SUM(YESTERDAY_CNT) AS YESTERDAY_CNT,
+			SUM(WEEK_CNT) AS WEEK_CNT,
+			SUM(MONTH_CNT) AS MONTH_CNT
+		FROM(
+			SELECT 
+				COUNT(1) AS TODAY_CNT
+				, 0 AS YESTERDAY_CNT
+				, 0 AS WEEK_CNT
+				, 0 AS MONTH_CNT
+			FROM MC_MEMBER
+			WHERE DATE(REG_DT) = DATE_FORMAT(SYSDATE(), '%Y-%m-%d')
+			UNION ALL
+			SELECT 
+				0 AS TODAY_CNT
+				, COUNT(1) AS YESTERDAY_CNT
+				, 0 AS WEEK_CNT
+				, 0 AS MONTH_CNT
+			FROM MC_MEMBER
+			WHERE DATE(REG_DT) = DATE_FORMAT(DATE_ADD(SYSDATE(), INTERVAL - 1 DAY), '%Y-%m-%d')
+			UNION ALL
+			SELECT 
+				0 AS TODAY_CNT
+				, 0 AS YESTERDAY_CNT
+				, COUNT(1) AS WEEK_CNT
+				, 0 AS MONTH_CNT
+			FROM MC_MEMBER
+			WHERE DATE(REG_DT) BETWEEN SUBDATE(CURDATE(),DATE_FORMAT(CURDATE(),'%w')-1) AND SUBDATE(CURDATE(),DATE_FORMAT(CURDATE(),'%w')-7)
+			UNION ALL
+				SELECT 
+				0 AS TODAY_CNT
+				, 0 AS YESTERDAY_CNT
+				, 0 AS WEEK_CNT
+				, COUNT(1) AS MONTH_CNT
+			FROM MC_MEMBER
+			WHERE DATE(REG_DT) BETWEEN DATE_FORMAT(SYSDATE(), '%Y-%m-01') AND LAST_DAY(SYSDATE())
+		)T
+	</select>
+	
+	<select id="most_vistor" parameterType="Map" resultType="mcmap">
+	<![CDATA[
+		SELECT
+			PT1.*
+		FROM (
+			SELECT
+			CAST(@ROWNUM:=@ROWNUM+1 AS SIGNED) AS RN,
+			T1.*
+			FROM (
+				SELECT
+					*
+				FROM(
+					SELECT 
+						a.MEMBER_ID,
+						b.MEMBER_NM,
+						COUNT(1) AS CNT
+					FROM MC_ANALYTICS a JOIN (SELECT MEMBER_ID, MEMBER_NM FROM MC_MEMBER WHERE GROUP_SEQ <> 1) b
+					ON a.MEMBER_ID=b.MEMBER_ID
+					GROUP BY a.MEMBER_ID
+				)T
+				ORDER BY CNT DESC
+			) T1, (SELECT @rownum:=0) TMP
+		) PT1
+		WHERE RN <= 5
+	]]>
+	</select>
+	
+	<select id="admin_connection_count" parameterType="Map" resultType="int">
+		SELECT
+			COUNT(MEMBER_ID) AS CNT
+		FROM(
+			SELECT
+				MAX(T.MEMBER_ID) MEMBER_ID
+			FROM(
+				SELECT 
+					MEMBER_ID, MEMBER_NAME, DATE_FORMAT(LOGIN_DATE, '%y%m%d') AS YMD 
+				FROM MC_STAFF_LOGIN_TRACKING 
+				
+			) T
+			<if test="!(start_dt == null or start_dt == '')" >
+			<![CDATA[
+			WHERE YMD >= #{start_dt} AND YMD <= #{end_dt}
+			]]>
+			</if>
+			GROUP BY T.MEMBER_ID, T.YMD
+		)T1
+	</select>
+	
+	<select id="users_status" parameterType="Map" resultType="mcmap">
+		SELECT
+			SUM(CNT1) AS CNT1, SUM(CNT2) AS CNT2, SUM(CNT3) AS CNT3, SUM(CNT4) AS CNT4, SUM(CNT5) AS CNT5
+		FROM( 	
+			SELECT 
+				COUNT(1) AS CNT1, 0 AS CNT2, 0 AS CNT3, 0 AS CNT4, 0 AS CNT5 
+			FROM MC_USER_MEMBER
+			WHERE DEL_YN='N'
+			UNION ALL
+			SELECT 
+				0 AS CNT1, COUNT(1) AS CNT2, 0 AS CNT3, 0 AS CNT4, 0 AS CNT5 
+			FROM MC_USER_MEMBER
+			WHERE DEL_YN='Y'
+			UNION ALL
+			SELECT 
+				0 AS CNT1, 0 AS CNT2, COUNT(1) AS CNT3, 0 AS CNT4, 0 AS CNT5 
+			FROM MC_USER_MEMBER
+			WHERE DORMANCY_YN='Y'
+			UNION ALL
+			SELECT 
+				0 AS CNT1, 0 AS CNT2, 0 AS CNT3, COUNT(1) AS CNT4, 0 AS CNT5 
+			FROM MC_USER_MEMBER
+			WHERE DATE_FORMAT(REG_DT, '%y%m%d')=DATE_FORMAT(SYSDATE(), '%y%m%d')
+			UNION ALL
+			SELECT 
+				0 AS CNT1, 0 AS CNT2, 0 AS CNT3, 0 AS CNT4, COUNT(1) AS CNT5 
+			FROM MC_USER_MEMBER
+			WHERE DEL_YN='Y' AND DATE_FORMAT(DEL_DT, '%y%m%d')=DATE_FORMAT(SYSDATE(), '%y%m%d')
+		)T1
+	</select>
+	
+	<select id="security_status" parameterType="Map" resultType="mcmap">
+		SELECT
+			A.* , B.*
+		FROM(		
+			SELECT 
+				#{site_id} AS CMS_MENU_SEQ,
+				SITE_ID, LOGOUT_TIME_YN, LOGOUT_TIME, PW_CHANGE_YN, PW_CHANGE_CYCLE, DORMANCY_YN, DORMANCY_DAY, ADM_LOGOUT_TIME_YN, ADM_LOGOUT_TIME, ADM_PW_CHANGE_YN, ADM_PW_CHANGE_CYCLE,
+				ADM_DORMANCY_YN, ADM_DORMANCY_DAY			
+			FROM MC_BASIC_SETTING
+			WHERE SITE_ID='1'
+		) A LEFT OUTER JOIN MC_CMS_MENU B
+		ON A.CMS_MENU_SEQ = B.CMS_MENU_SEQ
+	</select>
+	
+	<select id="board_count" parameterType="Map" resultType="mcmap">
+		SELECT
+		    CASE
+		    	WHEN BOARD_TYPE = 'A' THEN '일반(A)'
+		    	WHEN BOARD_TYPE = 'B' THEN '갤러리(B)'
+				WHEN BOARD_TYPE = 'C' THEN '1:1문의(C)'
+				WHEN BOARD_TYPE = 'D' THEN '답변형(D)'
+				WHEN BOARD_TYPE = 'E' THEN 'FAQ(E)'
+				WHEN BOARD_TYPE = 'F' THEN 'CUSTOM(F)'
+		    END AS BOARD_TYPE_NM,
+			(SELECT COUNT(BOARD_SEQ) FROM MC_BOARD WHERE DEL_YN = 'N' AND USE_YN = 'Y' AND BOARD_TYPE = A.BOARD_TYPE) AS USE_CNT,
+			(SELECT COUNT(BOARD_SEQ) FROM MC_BOARD WHERE DEL_YN = 'N' AND USE_YN = 'N' AND BOARD_TYPE = A.BOARD_TYPE) AS UN_USE_CNT
+		FROM
+			(
+				SELECT
+					BOARD_TYPE
+				FROM
+					MC_BOARD
+				WHERE
+					DEL_YN = 'N'
+				GROUP BY BOARD_TYPE
+			) AS A
+		ORDER BY A.BOARD_TYPE;
+	</select>
+	
+	<select id="system_status" parameterType="Map" resultType="mcmap">
+		SELECT
+			SUM(CNT1) AS CNT1, SUM(CNT2) AS CNT2, SUM(CNT3) AS CNT3, SUM(CNT4) AS CNT4
+		FROM(
+			SELECT
+				COUNT(CMS_MENU_SEQ) AS CNT1, 0 AS CNT2, 0 AS CNT3, 0 AS CNT4
+			FROM MC_CMS_MENU
+			WHERE PARENT_MENU_SEQ=0 AND DEL_YN='N'
+			UNION ALL
+			SELECT
+				0 AS CNT1, COUNT(SEQ) AS CNT2, 0 AS CNT3, 0 AS CNT4
+			FROM MC_PROGRAMS
+			WHERE DEL_YN='N'
+			UNION ALL
+			SELECT 
+				0 AS CNT1, 0 AS CNT2, (CASE WHEN COALESCE(TWT_CONSUMER_KEY, '') = '' THEN 0 ELSE 1 END) + (CASE WHEN COALESCE(FACE_APPID, '') = '' THEN 0 ELSE 1 END) + (CASE WHEN COALESCE(NAV_CLIENT_ID, '') = '' THEN 0 ELSE 1 END) + (CASE WHEN COALESCE(GOOGLE_CLIENT_ID, '') = '' THEN 0 ELSE 1 END) + (CASE WHEN COALESCE(INSTA_CLIENT_ID, '') = '' THEN 0 ELSE 1 END) + (CASE WHEN COALESCE(KAO_CLIENT_ID, '') = '' THEN 0 ELSE 1 END) AS CNT3, 0 AS CNT4
+			FROM MC_COMMENT_SNS_ACCOUNT
+			UNION ALL
+			SELECT 
+				0 AS CNT1, 0 AS CNT2, 0 AS CNT3, COUNT(SEQ) AS CNT4
+			FROM MC_IP_ALLOW WHERE DEL_YN='N'
+		) T1
+	</select>
+	
+	<select id="filter_row" parameterType="Map" resultType="int">
+		SELECT
+			COUNT(A.SEQ) CNT
+		FROM 
+			MC_PERSONAL_DATA A
+	</select>	
+	
+	<select id="filter_count" parameterType="Map" resultType="int">
+		SELECT
+            IFNULL((T1.JUMIN_TOTAL + T1.BUSINO_TOTAL + T1.BUBINO_TOTAL + T1.EMAIL_TOTAL + T1.CELL_TOTAL + T1.TEL_TOTAL + T1.CARD_TOTAL), 0) AS TOTAL   
+		FROM(
+			SELECT
+				SUM(A.JUMIN_CNT) AS JUMIN_TOTAL,
+				SUM(A.BUSINO_CNT) AS BUSINO_TOTAL,
+				SUM(A.BUBINO_CNT) AS BUBINO_TOTAL,
+				SUM(A.EMAIL_CNT) AS EMAIL_TOTAL,
+				SUM(A.CELL_CNT) AS CELL_TOTAL,
+				SUM(A.TEL_CNT) AS TEL_TOTAL, 
+				SUM(A.CARD_CNT) AS CARD_TOTAL
+			FROM 
+				MC_PERSONAL_DATA A
+		) T1
+	</select>
+	
+	<select id="reserve_count" parameterType="Map" resultType="mcmap">
+		SELECT 
+			SUM(CNT1) AS CNT1, SUM(CNT2) AS CNT2
+		FROM(
+			SELECT 
+				COUNT(1) AS CNT1, 0 AS CNT2
+			FROM MC_RESERVE 
+			WHERE DEL_YN='N' AND STATUS='I' AND GUBUN='M'
+			UNION ALL 
+			SELECT 
+				0 CNT1, COUNT(1) AS CNT2
+			FROM MC_RESERVE 
+			WHERE DEL_YN='N' AND STATUS='I' AND GUBUN='B'
+		)T
+	</select>
+	
+	<select id="banner_status" parameterType="Map" resultType="mcmap">
+	<![CDATA[
+		SELECT
+			SELECTER, SELECTER_NM, SUM(CNT1) as CNT1, SUM(CNT2) as CNT2, SUM(CNT3) as CNT3
+		FROM(
+			SELECT
+				B.SELECTER, B.SELECTER_NM,
+				(CASE WHEN DEL_YN='N' AND USE_YN='Y' AND START_DT <= SYSDATE() AND END_DT >= CURDATE() THEN 1 ELSE 0 END) AS CNT1,
+				(CASE WHEN DEL_YN IS NOT NULL THEN 1 ELSE 0 END) AS CNT2,
+				(CASE WHEN DEL_YN='Y' OR USE_YN='N' OR START_DT > SYSDATE() OR END_DT < CURDATE() THEN 1 ELSE 0 END) AS CNT3
+			FROM MC_POPUPZONE A RIGHT OUTER JOIN (
+				SELECT #{site_id} AS SITE_ID, 1 AS SELECTER , '메인이미지' AS SELECTER_NM UNION ALL
+				SELECT #{site_id} AS SITE_ID, 2 AS SELECTER , '팝업존' AS SELECTER_NM UNION ALL
+				SELECT #{site_id} AS SITE_ID, 3 AS SELECTER , '하단롤링' AS SELECTER_NM UNION ALL
+				SELECT #{site_id} AS SITE_ID, 4 AS SELECTER , '스카이팝업' AS SELECTER_NM UNION ALL
+				SELECT #{site_id} AS SITE_ID, 5 AS SELECTER , '플로팅배너' AS SELECTER_NM UNION ALL
+				SELECT #{site_id} AS SITE_ID, 10 AS SELECTER , '레이어팝업' AS SELECTER_NM 
+			) B
+			ON A.SELECTER = B.SELECTER AND A.SITE_ID=B.SITE_ID
+			WHERE B.SITE_ID=#{site_id}
+		) T
+		GROUP BY SELECTER, SELECTER_NM
+    ]]>
+	</select>
+	
+	<select id="banner_end_schedule" parameterType="Map" resultType="mcmap">
+	<![CDATA[
+		SELECT 
+			B.SELECTER_NM,
+			A.SELECTER, A.TITLE, DATE_FORMAT(A.START_DT, '%Y.%m.%d') as START_DT, DATE_FORMAT(A.END_DT, '%Y.%m.%d') as END_DT
+		FROM MC_POPUPZONE A LEFT OUTER JOIN (
+			SELECT 1 AS SELECTER , '메인이미지' AS SELECTER_NM UNION ALL
+			SELECT 2 AS SELECTER , '팝업존' AS SELECTER_NM UNION ALL
+			SELECT 3 AS SELECTER , '하단롤링' AS SELECTER_NM UNION ALL
+			SELECT 4 AS SELECTER , '스카이팝업' AS SELECTER_NM UNION ALL
+			SELECT 5 AS SELECTER , '플로팅배너' AS SELECTER_NM UNION ALL
+			SELECT 10 AS SELECTER , '레이어팝업' AS SELECTER_NM 
+		) B
+		ON A.SELECTER = B.SELECTER
+		WHERE A.SITE_ID=#{site_id} AND A.DEL_YN='N' AND A.USE_YN='Y' AND A.START_DT <= SYSDATE() AND A.END_DT >= CURDATE()
+			AND DATEDIFF(DATE_FORMAT(A.END_DT, '%Y-%m-%d'), DATE_FORMAT(CURDATE(), '%Y-%m-%d')) <= 3
+    ]]>
+	</select>
+	
+</mapper>

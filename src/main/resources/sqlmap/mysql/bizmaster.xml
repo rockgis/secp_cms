@@ -1,0 +1,165 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="bizmaster">
+	
+	
+	<select id="selectBizList" parameterType="Map" resultType="MCMap">
+		<!-- 사업리스트 -->
+		SELECT 
+			BIZ_YR
+			, BIZ_NO
+			, BIZ_CYCL
+			, BIZ_NM
+			, PRGRS_CN
+			, RCPT_BGNGDAY
+			, RCPT_ENDDAY
+			, INDVDL_GRP_SE_CD
+			, APLY_TYPE_CD
+			, APLY_PSBLTY_RGN_CD
+			, BIZ_CLSF_CD
+			, REL_SITE, BIZ_SE_CD
+			, RCPT_NOPE
+			, PRUF_DCMNT_GUIDANCE
+			, PIC, PIC_CTTPC
+			, PIC_EML, DDLN_YN
+			, WRTANC_HDER
+			, WRTANC_IMG
+			, DEL_YN
+			, BSNS_CNNC_URL
+			, REG_DT
+			, RGTR
+			, MDFCN_DT
+			, MDFR
+		FROM TN_BIZ_CYCL_MNG
+		WHERE 1=1
+		<if test="!(BIZ_YR == null or BIZ_YR == '')">
+			AND BIZ_YR = #{BIZ_YR}
+		</if>
+		<if test="!(BIZ_CYCL == null or BIZ_CYCL == '')">
+			AND BIZ_CYCL = #{BIZ_CYCL}
+		</if>
+		<if test="!(BIZ_NM == null or BIZ_NM == '')">
+			AND BIZ_NM like CONCAT('%',#{BIZ_NM},'%')
+		</if>
+		
+	</select>
+	
+	<select id="selectBizDetail" parameterType="Map" resultType="MCMap">
+		<!-- 사업정보상세 -->
+		SELECT 
+			BIZ_YR
+			, BIZ_NO
+			, BIZ_CYCL
+			, BIZ_NM
+			, PRGRS_CN
+			, RCPT_BGNGDAY
+			, RCPT_ENDDAY
+			, INDVDL_GRP_SE_CD
+			, APLY_TYPE_CD
+			, APLY_PSBLTY_RGN_CD
+			, BIZ_CLSF_CD
+			, REL_SITE, BIZ_SE_CD
+			, RCPT_NOPE
+			, PRUF_DCMNT_GUIDANCE
+			, PIC, PIC_CTTPC
+			, PIC_EML, DDLN_YN
+			, WRTANC_HDER
+			, WRTANC_IMG
+			, DEL_YN
+			, BSNS_CNNC_URL
+			, REG_DT
+			, RGTR
+			, MDFCN_DT
+			, MDFR
+		FROM TN_BIZ_CYCL_MNG
+		WHERE 1=1 
+		AND BIZ_YR=#{BIZ_YR} AND BIZ_NO=#{BIZ_NO} AND BIZ_CYCL=#{BIZ_CYCL}
+		
+	</select>
+	
+	<insert id="insertBiz" parameterType="Map">
+		<!-- 사업정보 입력 -->
+		INSERT INTO TN_BIZ_CYCL_MNG
+		(BIZ_YR, BIZ_NO, BIZ_CYCL, BIZ_NM, PRGRS_CN, RCPT_BGNGDAY, RCPT_ENDDAY, INDVDL_GRP_SE_CD, APLY_TYPE_CD, APLY_PSBLTY_RGN_CD
+		, BIZ_CLSF_CD, REL_SITE, BIZ_SE_CD, RCPT_NOPE, PRUF_DCMNT_GUIDANCE, PIC, PIC_CTTPC, PIC_EML, DDLN_YN, WRTANC_HDER, WRTANC_IMG, DEL_YN, BSNS_CNNC_URL
+		, REG_DT, RGTR, MDFCN_DT, MDFR)
+		VALUES(#{BIZ_YR}, #{BIZ_NO}, #{BIZ_CYCL}, #{BIZ_NM}, #{PRGRS_CN}, #{RCPT_BGNGDAY}, #{RCPT_ENDDAY}, #{INDVDL_GRP_SE_CD}, #{APLY_TYPE_CD}, #{APLY_PSBLTY_RGN_CD}
+		, #{BIZ_CLSF_CD}, #{REL_SITE}, #{BIZ_SE_CD}, #{RCPT_NOPE}, #{PRUF_DCMNT_GUIDANCE}, #{PIC}, #{PIC_CTTPC}, #{PIC_EML}, #{DDLN_YN}, #{WRTANC_HDER}, #{WRTANC_IMG}, 'N', #{BSNS_CNNC_URL}
+		, DATE_FORMAT(now(),'%Y%m%d%H%i%s'), #{RGTR}, DATE_FORMAT(now(),'%Y%m%d%H%i%s'), #{MDFR})
+		
+	</insert>
+	
+	<update id="updateBiz" parameterType="Map">
+		<!-- 사업정보 수정 -->
+		UPDATE TN_BIZ_CYCL_MNG SET 
+			<trim prefixOverrides=",">
+				<if test="!(BIZ_NM == null or BIZ_NM == '')">
+					BIZ_NM = #{BIZ_NM}
+				</if>
+				<if test="!(PRGRS_CN == null or PRGRS_CN == '')">
+					,PRGRS_CN = #{PRGRS_CN}
+				</if>
+				<if test="!(RCPT_BGNGDAY == null or RCPT_BGNGDAY == '')">
+					,RCPT_BGNGDAY = #{RCPT_BGNGDAY}
+				</if>
+				<if test="!( RCPT_ENDDAY == null or RCPT_ENDDAY == '')">
+					,RCPT_ENDDAY = #{RCPT_ENDDAY}
+				</if>
+				<if test="!( INDVDL_GRP_SE_CD == null or INDVDL_GRP_SE_CD == '')">
+					,INDVDL_GRP_SE_CD = #{INDVDL_GRP_SE_CD}
+				</if>
+				<if test="!( APLY_TYPE_CD == null or APLY_TYPE_CD == '')">
+					,APLY_TYPE_CD = #{APLY_TYPE_CD}
+				</if>
+				<if test="!( APLY_PSBLTY_RGN_CD == null or APLY_PSBLTY_RGN_CD == '')">
+					,APLY_PSBLTY_RGN_CD = #{APLY_PSBLTY_RGN_CD}
+				</if>
+				<if test="!( BIZ_CLSF_CD == null or BIZ_CLSF_CD == '')">
+					,BIZ_CLSF_CD = #{BIZ_CLSF_CD}
+				</if>
+				<if test="!( REL_SITE == null or REL_SITE == '')">
+					,REL_SITE = #{REL_SITE}
+				</if>
+				<if test="!( BIZ_SE_CD == null or BIZ_SE_CD == '')">
+					,BIZ_SE_CD = #{BIZ_SE_CD}
+				</if>
+				<if test="!( RCPT_NOPE == null or RCPT_NOPE == '')">
+					,RCPT_NOPE = #{RCPT_NOPE}
+				</if>
+				<if test="!( PRUF_DCMNT_GUIDANCE == null or PRUF_DCMNT_GUIDANCE == '')">
+					,PRUF_DCMNT_GUIDANCE = #{PRUF_DCMNT_GUIDANCE}
+				</if>
+				<if test="!( PIC == null or PIC == '')">
+					,PIC = #{PIC}
+				</if>
+				<if test="!( PIC_CTTPC == null or PIC_CTTPC == '')">
+					,PIC_CTTPC = #{PIC_CTTPC}
+				</if>
+				<if test="!( PIC_EML == null or PIC_EML == '')">
+					,PIC_EML = #{PIC_EML}
+				</if>
+				<if test="!( DDLN_YN == null or DDLN_YN == '')">
+					,DDLN_YN = #{DDLN_YN}
+				</if>
+				<if test="!( WRTANC_HDER == null or WRTANC_HDER == '')">
+					,WRTANC_HDER = #{WRTANC_HDER}
+				</if>
+				<if test="!( WRTANC_IMG == null or WRTANC_IMG == '')">
+					,WRTANC_IMG = #{WRTANC_IMG}
+				</if>
+				<if test="!( DEL_YN == null or DEL_YN == '')">
+					,DEL_YN = #{DEL_YN}
+				</if>
+				<if test="!( BSNS_CNNC_URL == null or BSNS_CNNC_URL == '')">
+					,BSNS_CNNC_URL = #{BSNS_CNNC_URL}
+				</if>
+					,MDFCN_DT = DATE_FORMAT(now(),'%Y%m%d%H%i%s')
+				<if test="!( MDFR == null or MDFR == '')">
+					,MDFR = #{MDFR}
+				</if>	
+			</trim>
+		WHERE BIZ_YR=#{BIZ_YR} AND BIZ_NO=#{BIZ_NO} AND BIZ_CYCL=#{BIZ_CYCL} AND BIZ_SN=#{BIZ_SN}
+	</update>
+	
+	
+</mapper>

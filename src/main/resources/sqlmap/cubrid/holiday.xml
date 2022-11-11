@@ -1,0 +1,75 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="Holiday">
+	
+	<sql id="listWhere">
+		WHERE a.DEL_YN='N'
+		<choose>
+			<when test="condition == 'title'.toString()">
+				<if test="!(keyword == null or keyword == '')" >
+					AND TITLE like '%'||#{keyword}||'%'
+		      	</if>
+	      	</when>
+			<when test="condition == 'holiday'.toString()">
+				<if test="!(start_dt == null or start_dt == '') and !(end_dt == null or end_dt == '')" >
+					AND TO_CHAR(HOLIDAY, 'YYYY-MM-DD') BETWEEN #{start_dt} AND #{end_dt}
+		      	</if>
+			</when>
+		</choose>
+	</sql>
+	
+	<select id="list" parameterType="Map" resultType="mcmap">
+		SELECT PT1.* FROM (
+            SELECT
+                rownum RN,
+                a.*
+            FROM (SELECT * FROM MC_HOLIDAY ORDER BY HOLIDAY DESC) a
+            <include refid="listWhere"/>
+        ) PT1
+		WHERE CEIL(RN/NVL(#{rows},10))=NVL(#{cpage},1)
+	</select>
+	
+	<select id="pagination" parameterType="Map" resultType="mcmap">
+	    SELECT
+	        CEIL(COUNT(1)/NVL(#{rows}, 10)) TOTALPAGE,
+	        COUNT(1) TOTALCOUNT
+        FROM (SELECT * FROM MC_HOLIDAY ORDER BY HOLIDAY_SEQ DESC) a
+		<include refid="listWhere"/>
+	</select>
+	
+	<update id="modify" parameterType="Map">
+		UPDATE MC_HOLIDAY SET
+			HOLIDAY = 				#{holiday}
+			, TITLE = 				#{title}
+			, SUN_CAL = 			#{sun_cal}
+			, LUNAR_CAL = 			#{lunar_cal}
+			, MOD_ID = 				#{session_member_id}
+			, MOD_NM = 				#{session_member_nm}
+			, MOD_DT = 				sysdatetime
+		WHERE HOLIDAY_SEQ = #{holiday_seq}
+	</update>
+	
+	<update id="write" parameterType="Map">
+		INSERT INTO MC_HOLIDAY(
+			HOLIDAY_SEQ, HOLIDAY, TITLE, LUNAR_CAL, SUN_CAL, REG_ID, REG_NM, REG_DT, DEL_YN
+		)VALUES(
+			SEQ_MC_HOLIDAY.NEXTVAL, #{holiday}, #{title}, #{lunar_cal}, #{sun_cal}, #{session_member_id}, #{session_member_nm}, sysdatetime, 'N' 
+		)
+	</update>
+	
+	<select id="view" parameterType="Map" resultType="mcmap">
+		SELECT
+			HOLIDAY_SEQ, HOLIDAY, TITLE, LUNAR_CAL, SUN_CAL
+		FROM MC_HOLIDAY 
+		WHERE HOLIDAY_SEQ = #{holiday_seq}
+	</select>
+	
+	<update id="del" parameterType="Map">
+		UPDATE MC_HOLIDAY SET
+			DEL_YN = 'Y'
+			,DEL_ID = #{session_member_id}
+			,DEL_NM = #{session_member_nm}
+			,DEL_DT = sysdatetime
+		WHERE HOLIDAY_SEQ = #{holiday_seq} 
+	</update>
+</mapper>

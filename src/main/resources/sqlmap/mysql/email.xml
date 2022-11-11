@@ -1,0 +1,406 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="Email">
+	
+	<select id="list" parameterType="Map" resultType="mcmap">
+		SELECT 
+			A.*
+		FROM (
+			SELECT 
+				CAST(@ROWNUM:=@ROWNUM+1 AS SIGNED) AS RN, TB.*
+			FROM(
+				SELECT
+				    *
+				FROM (
+				SELECT
+					a.*,
+					b.TITLE AS TARGET_NM,
+					c.TITLE AS FORM_TITLE,
+					d.TARGET_CNT
+				    FROM MC_MAIL a LEFT OUTER JOIN MC_MAIL_TARGET b
+				    ON a.TARGET_SEQ=b.SEQ
+				    LEFT OUTER JOIN MC_MAIL_FORM c
+				    ON a.FORM_SEQ=c.SEQ
+				    LEFT OUTER JOIN (SELECT P_SEQ, COUNT(1) AS TARGET_CNT FROM MC_MAIL_QUEUE GROUP BY P_SEQ) d
+				    ON a.SEQ=d.P_SEQ
+					<where>
+						<if test="!(keyword == null or keyword == '')" >
+							<choose>
+								<when test="condition == 'title'.toString()">AND a.TITLE like CONCAT('%',#{keyword},'%')</when>
+							</choose>
+		        		</if>
+			        </where>
+				) t
+				ORDER BY SEQ DESC
+			) AS TB, 
+			(SELECT @ROWNUM:=0) AS R
+		)AS A
+		WHERE CEIL(RN/IFNULL(#{rows},10))=IFNULL(#{cpage},1)
+	</select>
+	
+	<select id="pagination" parameterType="Map" resultType="mcmap">
+	    SELECT
+	        CEIL(COUNT(1)/IFNULL(#{rows}, 10)) TOTALPAGE,
+	        COUNT(1) TOTALCOUNT
+        FROM MC_MAIL a
+		<where>
+			<if test="!(keyword == null or keyword == '')" >
+				<choose>
+					<when test="condition == 'title'.toString()">AND a.TITLE like CONCAT('%',#{keyword},'%')</when>
+				</choose>
+       		</if>
+        </where>
+	</select>
+	
+	<select id="send_info_list" parameterType="Map" resultType="mcmap">
+           SELECT           	
+               a.TITLE, a.SENDER_NM, a.SENDER_MAIL, a.CONTS,
+               b.USER_NAME, b.USER_EMAIL, b.SEQ
+           FROM MC_MAIL a JOIN MC_MAIL_QUEUE b
+           ON a.SEQ=b.P_SEQ
+           WHERE a.SEQ=#{seq}
+	</select>
+	
+	<select id="queue_list" parameterType="Map" resultType="mcmap">
+           SELECT           	
+               b.USER_NAME, b.USER_EMAIL, b.SEQ, b.STATUS, (CASE b.STATUS WHEN 'N' THEN '대기' WHEN 'S' THEN '발송완료' WHEN 'F' THEN '실패' WHEN 'C' THEN '수신확인' ELSE '' END) as STATUS_NM
+           FROM MC_MAIL a JOIN MC_MAIL_QUEUE b
+           ON a.SEQ=b.P_SEQ
+           WHERE a.SEQ=#{seq}
+	</select>
+	
+	<update id="send_result" parameterType="Map">
+		UPDATE MC_MAIL SET
+			STATUS = 				#{status}
+		WHERE SEQ = #{seq}
+	</update>
+	
+	<update id="delete_mail_queue" parameterType="Map">
+		DELETE FROM MC_MAIL_QUEUE WHERE P_SEQ=#{seq}
+	</update>
+	<update id="insert_mail_queue" parameterType="Map">
+		INSERT INTO MC_MAIL_QUEUE(
+			P_SEQ, USER_NAME, USER_EMAIL, STATUS
+		)VALUES(
+			#{p_seq}, #{user_name}, #{user_email}, 'N'
+		)
+	</update>
+	
+	<update id="receive" parameterType="Map">
+		UPDATE MC_MAIL_QUEUE SET
+			STATUS = 'C'
+		WHERE SEQ = #{seq}
+	</update>
+	
+	<update id="send_success" parameterType="Map">
+		UPDATE MC_MAIL_QUEUE SET
+			STATUS = 'S'
+		WHERE SEQ = #{seq}
+	</update>
+	
+	<update id="send_fail" parameterType="Map">
+		UPDATE MC_MAIL_QUEUE SET
+			STATUS = 'F'
+		WHERE SEQ = #{seq}
+	</update>
+	
+	<select id="smtp_list_all" parameterType="Map" resultType="mcmap">
+        SELECT
+            a.*
+        FROM MC_MAIL_SMTP a
+	</select>
+	
+	<select id="smtp_list" parameterType="Map" resultType="mcmap">
+		SELECT 
+			A.*
+		FROM (
+			SELECT 
+				CAST(@ROWNUM:=@ROWNUM+1 AS SIGNED) AS RN, TB.*
+			FROM(
+				SELECT
+				    *
+				FROM MC_MAIL_SMTP t
+				<where>
+				<if test="!(keyword == null or keyword == '')" >
+					<choose>
+						<when test="condition == 'title'.toString()">AND TITLE like CONCAT('%',#{keyword},'%')</when>
+						<when test="condition == 'auth_id'.toString()">AND AUTH_ID like CONCAT('%',#{keyword},'%')</when>
+						<when test="condition == 'host'.toString()">AND HOST like CONCAT('%',#{keyword},'%')</when>
+					</choose>
+	       		</if>
+		        </where>
+				ORDER BY SEQ DESC
+			) AS TB, 
+			(SELECT @ROWNUM:=0) AS R
+		)AS A
+		WHERE CEIL(RN/IFNULL(#{rows},10))=IFNULL(#{cpage},1)
+	</select>
+	
+	<select id="smtp_pagination" parameterType="Map" resultType="mcmap">
+	    SELECT
+	        CEIL(COUNT(1)/IFNULL(#{rows}, 10)) TOTALPAGE,
+	        COUNT(1) TOTALCOUNT
+        FROM MC_MAIL_SMTP a
+		<where>
+				<if test="!(keyword == null or keyword == '')" >
+					<choose>
+						<when test="condition == 'title'.toString()">AND TITLE like CONCAT('%',#{keyword},'%')</when>
+						<when test="condition == 'auth_id'.toString()">AND AUTH_ID like CONCAT('%',#{keyword},'%')</when>
+						<when test="condition == 'host'.toString()">AND HOST like CONCAT('%',#{keyword},'%')</when>
+					</choose>
+	       		</if>
+        </where>
+	</select>
+	
+	<select id="target_list" parameterType="Map" resultType="mcmap">
+		SELECT 
+			A.*
+		FROM (
+			SELECT 
+				CAST(@ROWNUM:=@ROWNUM+1 AS SIGNED) AS RN, TB.*
+			FROM(
+				SELECT
+				    *
+				FROM MC_MAIL_TARGET t
+				<where>
+				<if test="!(keyword == null or keyword == '')" >
+					<choose>
+						<when test="condition == 'title'.toString()">AND TITLE like CONCAT('%',#{keyword},'%')</when>
+					</choose>
+	       		</if>
+		        </where>
+				ORDER BY SEQ DESC
+			) AS TB, 
+			(SELECT @ROWNUM:=0) AS R
+		)AS A
+		WHERE CEIL(RN/IFNULL(#{rows},10))=IFNULL(#{cpage},1)
+	</select>
+	
+	<select id="target_pagination" parameterType="Map" resultType="mcmap">
+	    SELECT
+	        CEIL(COUNT(1)/IFNULL(#{rows}, 10)) TOTALPAGE,
+	        COUNT(1) TOTALCOUNT
+        FROM MC_MAIL_TARGET a
+		<where>
+				<if test="!(keyword == null or keyword == '')" >
+					<choose>
+						<when test="condition == 'title'.toString()">AND a.TITLE like CONCAT('%',#{keyword},'%')</when>
+					</choose>
+	       		</if>
+        </where>
+	</select>
+	
+	<select id="form_list" parameterType="Map" resultType="mcmap">
+		SELECT 
+			A.*
+		FROM (
+			SELECT 
+				CAST(@ROWNUM:=@ROWNUM+1 AS SIGNED) AS RN, TB.*
+			FROM(
+				SELECT
+				    *
+				FROM MC_MAIL_FORM t
+				<where>
+				<if test="!(keyword == null or keyword == '')" >
+					<choose>
+						<when test="condition == 'title'.toString()">AND t.TITLE like CONCAT('%',#{keyword},'%')</when>
+					</choose>
+	       		</if>
+		        </where>
+				ORDER BY SEQ DESC
+			) AS TB, 
+			(SELECT @ROWNUM:=0) AS R
+		)AS A
+		WHERE CEIL(RN/IFNULL(#{rows},10))=IFNULL(#{cpage},1)
+	</select>
+	
+	<select id="form_pagination" parameterType="Map" resultType="mcmap">
+	    SELECT
+	        CEIL(COUNT(1)/IFNULL(#{rows}, 10)) TOTALPAGE,
+	        COUNT(1) TOTALCOUNT
+        FROM MC_MAIL_FORM a
+		<where>
+				<if test="!(keyword == null or keyword == '')" >
+					<choose>
+						<when test="condition == 'title'.toString()">AND a.TITLE like CONCAT('%',#{keyword},'%')</when>
+					</choose>
+	       		</if>
+        </where>
+	</select>
+	
+	<update id="write" parameterType="Map" useGeneratedKeys="true" keyColumn="seq" keyProperty="seq">
+		INSERT INTO MC_MAIL(
+			TITLE, CONTS, SENDER_NM, SENDER_MAIL, STATUS, REG_ID, REG_NM, REG_DT, FORM_SEQ, TARGET_SEQ
+		)VALUES(
+			#{title}, #{conts}, #{sender_nm}, #{sender_mail}, 'N', #{session_member_id}, #{session_member_nm}, sysdate(), #{form_seq}, #{target_seq}
+		)
+	</update>
+	<select id="view" parameterType="Map" resultType="mcmap">
+		SELECT
+			SEQ, TITLE, CONTS, SENDER_NM, SENDER_MAIL, STATUS, REG_ID, REG_NM, REG_DT, FORM_SEQ, TARGET_SEQ
+		FROM MC_MAIL
+		WHERE SEQ = #{seq} 
+	</select>
+	
+	<update id="modify" parameterType="Map">
+		UPDATE MC_MAIL SET
+			TITLE = 				#{title}
+			, CONTS = 				#{conts}
+			, SENDER_NM = 				#{sender_nm}
+			, SENDER_MAIL = 				#{sender_mail}
+			, FORM_SEQ = 				#{form_seq}
+			, TARGET_SEQ = 				#{target_seq}
+			, MOD_ID = 				#{session_member_id}
+			, MOD_NM = 				#{session_member_nm}
+			, MOD_DT = 				sysdate()
+		WHERE SEQ = #{seq}
+	</update>
+	
+	<update id="del" parameterType="Map">
+		DELETE FROM MC_MAIL WHERE SEQ = #{seq} 
+	</update>
+	
+	<update id="smtp_write" parameterType="Map">
+		INSERT INTO MC_MAIL_SMTP(
+			TITLE, HOST, PORT, AUTH_ID, AUTH_PW, SSL_YN, TLS_YN
+		)VALUES(
+			#{title}, #{host}, #{port}, #{auth_id}, #{auth_pw}, #{ssl_yn}, #{tls_yn}
+		)
+	</update>
+	
+	<select id="smtp_view" parameterType="Map" resultType="mcmap">
+		SELECT
+			SEQ, TITLE, HOST, PORT, AUTH_ID, SSL_YN, TLS_YN
+		FROM MC_MAIL_SMTP 
+		WHERE SEQ = #{seq} 
+	</select>
+	
+	<select id="get_smtp_config" parameterType="Map" resultType="mcmap">
+		SELECT
+			*
+		FROM MC_MAIL_SMTP 
+		WHERE SEQ = #{seq} 
+	</select>
+	
+	<update id="smtp_modify" parameterType="Map">
+		UPDATE MC_MAIL_SMTP SET
+			TITLE = 				#{title}
+			, HOST = 					#{host}
+			, PORT = 				#{port}
+			, AUTH_ID = 				#{auth_id}
+			, AUTH_PW = 				#{auth_pw}
+			, SSL_YN = 				#{ssl_yn}
+			, TLS_YN = 				#{tls_yn}
+		WHERE SEQ = #{seq}
+	</update>
+	
+	<update id="smtp_del" parameterType="Map">
+		DELETE FROM MC_MAIL_SMTP WHERE SEQ = #{seq} 
+	</update>
+	
+	<update id="target_write" parameterType="Map" useGeneratedKeys="true" keyColumn="seq" keyProperty="p_seq">
+		INSERT INTO MC_MAIL_TARGET(
+			TITLE, TARGET_CNT
+		)VALUES(
+			#{title}, #{target_cnt}
+		)
+	</update>
+	
+	<update id="target_list_write" parameterType="Map">
+		INSERT INTO MC_MAIL_TARGET_LIST(
+			P_SEQ, USER_NAME, USER_EMAIL
+		)VALUES(
+			#{p_seq}, #{user_name}, #{user_email}
+		)
+	</update>
+	
+	<select id="target_view" parameterType="Map" resultType="mcmap">
+		SELECT
+			SEQ, TITLE, TARGET_CNT
+		FROM MC_MAIL_TARGET 
+		WHERE SEQ = #{seq} 
+	</select>
+	
+	<select id="target_list_dtl" parameterType="Map" resultType="mcmap">
+		SELECT
+			SEQ, P_SEQ, USER_NAME, USER_EMAIL
+		FROM MC_MAIL_TARGET_LIST 
+		WHERE P_SEQ = #{seq} 
+	</select>
+	
+	<update id="target_modify" parameterType="Map">
+		UPDATE MC_MAIL_TARGET SET
+			TITLE = 				#{title}
+			, TARGET_CNT = 				#{target_cnt}
+		WHERE SEQ = #{seq}
+	</update>
+	
+	<update id="target_del" parameterType="Map">
+		DELETE FROM MC_MAIL_TARGET WHERE SEQ = #{seq} 
+	</update>
+	
+	<update id="target_list_del" parameterType="Map">
+		DELETE FROM MC_MAIL_TARGET_LIST WHERE P_SEQ = #{seq} 
+	</update>
+	
+	<update id="form_write" parameterType="Map">
+		INSERT INTO MC_MAIL_FORM(
+			TITLE, CONTS
+		)VALUES(
+			#{title}, #{conts}
+		)
+	</update>
+	
+	<select id="form_view" parameterType="Map" resultType="mcmap">
+		SELECT
+			SEQ, TITLE, CONTS
+		FROM MC_MAIL_FORM
+		WHERE SEQ = #{seq} 
+	</select>
+	
+	<update id="form_modify" parameterType="Map">
+		UPDATE MC_MAIL_FORM SET
+			TITLE = 				#{title}
+			, CONTS = 					#{conts}
+		WHERE SEQ = #{seq}
+	</update>
+	
+	<update id="form_del" parameterType="Map">
+		DELETE FROM MC_MAIL_FORM WHERE SEQ = #{seq} 
+	</update>
+	
+	<select id="user_list" parameterType="Map" resultType="mcmap">
+		SELECT 
+			A.*
+		FROM (
+			SELECT 
+				CAST(@ROWNUM:=@ROWNUM+1 AS SIGNED) AS RN, TB.*
+			FROM(
+				SELECT
+				    a.MEMBER_ID, a.MEMBER_NM, a.EMAIL, 
+				    b.GROUP_NM 
+				FROM MC_USER_MEMBER a LEFT OUTER JOIN MC_USER_GROUP b
+				ON a.GROUP_SEQ = b.GROUP_SEQ
+				WHERE a.DEL_YN = 'N'
+					<if test="!(keyword == null or keyword == '')" >
+						<choose>
+							<when test="condition == 'member_nm'.toString()">AND a.MEMBER_NM like CONCAT('%',#{keyword},'%')</when>
+							<when test="condition == 'member_id'.toString()">AND a.MEMBER_ID like CONCAT('%',#{keyword},'%')</when>
+						</choose>
+			      	</if>
+					<if test="!(use_yn == null or use_yn == '')" >
+						AND a.USE_YN = #{use_yn}
+			      	</if>
+			      	<if test="seq_list != null and seq_list.size > 0">
+			      		AND a.GROUP_SEQ IN 
+						<foreach collection="seq_list" separator="," index="index" open="(" close=")" item="item" >
+			 		 	#{item}
+			 			</foreach>
+					</if>
+				ORDER BY MEMBER_ID ASC
+			) AS TB, 
+			(SELECT @ROWNUM:=0) AS R
+		)AS A
+	</select>
+	
+</mapper>

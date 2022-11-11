@@ -1,0 +1,276 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="Search">
+	
+	<select id="list" parameterType="Map" resultType="mcmap">
+		SELECT PT1.* FROM (
+			SELECT 
+				ROWNUM AS RN,
+				T1.*
+			FROM (
+				SELECT
+					URL,
+					TITLE
+					  <if test='img_yn == "N"' >
+					  ,SUBSTR(conts,1,130) AS CONTS
+					  </if>
+					  <if test='img_yn == "Y"' >
+					  ,IMG
+					  </if>
+					  ,CONTAINS(CONTS, #{keyword}) as score
+				FROM
+					MC_SEARCH
+				WHERE 
+				<foreach collection="keyword_list" item="item_keyword" separator="or" open="(" close=")">
+					CONTAINS(CONTS, #{item_keyword}) > 0 or INSTR(TITLE, #{item_keyword}) > 0
+				</foreach>
+				<if test='in_keyword_yn == "Y"'>
+					AND 
+					<foreach collection="in_keyword_list" item="item_keyword" separator="or" open="(" close=")">
+						CONTAINS(CONTS, #{item_keyword}) > 0 or INSTR(TITLE, #{item_keyword}) > 0
+					</foreach>
+				</if>
+				<if test='img_yn == "Y"' >
+				<![CDATA[ and IMG is not null and IMG <> '' ]]>
+				</if>
+				<if test="!(gubun == null or gubun == '')">
+				and GUBUN = #{gubun}
+				</if>
+			) T1
+		) PT1
+		WHERE RN BETWEEN NVL(#{rows, jdbcType=INTEGER},10) * (NVL(#{cpage, jdbcType=INTEGER},1) - 1) + 1 AND NVL(#{rows, jdbcType=INTEGER},10) * NVL(#{cpage, jdbcType=INTEGER},1)
+	</select>
+	
+	<select id="page_info" parameterType="Map" resultType="mcmap">
+		SELECT 
+		CEIL(COUNT(1)/NVL(#{rows},10)) TOTALPAGE,
+		COUNT(1) TOTALCOUNT
+		FROM MC_SEARCH
+		WHERE 
+		<foreach collection="keyword_list" item="item_keyword" separator="or" open="(" close=")">
+			CONTAINS(CONTS, #{item_keyword}) > 0 or INSTR(TITLE, #{item_keyword}) > 0
+		</foreach>
+		<if test='in_keyword_yn == "Y"'>
+			AND 
+			<foreach collection="in_keyword_list" item="item_keyword" separator="or" open="(" close=")">
+				CONTAINS(CONTS, #{item_keyword}) > 0 or INSTR(TITLE, #{item_keyword}) > 0
+			</foreach>
+		</if>
+		<if test='img_yn == "Y"' >
+		<![CDATA[ and IMG is not null and IMG <> '' ]]>
+		</if>
+		<if test="!(gubun == null or gubun == '')">
+		and GUBUN = #{gubun}
+		</if>
+	</select>
+	
+	<select id="dit_list" parameterType="Map" resultType="mcmap">
+		SELECT PT1.* FROM (
+			SELECT
+				ROWNUM RN,
+		        t1.*
+		    FROM(
+		        SELECT 
+		            TITLE, MENU_URL,
+		            SYS_CONNECT_BY_PATH(TITLE, '>') as PAGE_NAVI
+		        FROM MC_CMS_MENU a
+		        START WITH PARENT_MENU_SEQ = 1
+		        CONNECT BY PRIOR CMS_MENU_SEQ = PARENT_MENU_SEQ
+		        ORDER SIBLINGS BY MENU_ORDER
+		    ) t1
+			WHERE 
+			<foreach collection="keyword_list" item="item_keyword" separator="or" open="(" close=")">
+				INSTR(t1.PAGE_NAVI, #{item_keyword})>0
+			</foreach>
+			<if test='in_keyword_yn == "Y"'>
+				AND 
+				<foreach collection="in_keyword_list" item="item_keyword" separator="or" open="(" close=")">
+					INSTR(t1.PAGE_NAVI, #{item_keyword})>0
+				</foreach>
+			</if>
+		) PT1
+		WHERE CEIL(RN/COALESCE(#{rows, jdbcType=INTEGER},10))=COALESCE(#{cpage, jdbcType=INTEGER},1)
+	</select>
+	
+	<select id="dit_page_info" parameterType="Map" resultType="mcmap">
+		SELECT 
+		CEIL(COUNT(1)/NVL(#{rows},10)) TOTALPAGE,
+		COUNT(1) TOTALCOUNT
+        FROM (
+            SELECT 
+                REPLACE(SYS_CONNECT_BY_PATH(TITLE, ';'),';', '>') as PAGE_NAVI
+            FROM MC_CMS_MENU a
+            START WITH PARENT_MENU_SEQ = 1
+            CONNECT BY PRIOR CMS_MENU_SEQ = PARENT_MENU_SEQ
+        ) t1
+		WHERE 
+		<foreach collection="keyword_list" item="item_keyword" separator="or" open="(" close=")">
+			INSTR(t1.PAGE_NAVI, #{item_keyword})>0
+		</foreach>
+		<if test='in_keyword_yn == "Y"'>
+			AND 
+			<foreach collection="in_keyword_list" item="item_keyword" separator="or" open="(" close=")">
+				INSTR(t1.PAGE_NAVI, #{item_keyword})>0
+			</foreach>
+		</if>
+	</select>
+	
+	<select id="mem_list" parameterType="Map" resultType="mcmap">
+		SELECT PT1.* FROM (
+		    SELECT
+		        ROW_NUMBER() OVER(ORDER BY b.ORDER_SEQ, a.ORDER_SEQ) RN,
+		        a.MEMBER_NM, a.EMAIL, a.TEL, a.CELL, a.RESPONSIBILITIES,
+		        b.GROUP_NM
+		    FROM MC_MEMBER a LEFT JOIN MC_GROUP b
+		    ON a.GROUP_SEQ=b.GROUP_SEQ
+			WHERE a.DEL_YN='N' AND a.GROUP_SEQ NOT IN(1,2)
+		    	AND(
+				<foreach collection="keyword_list" item="item_keyword" separator="or" open="(" close=")">
+					INSTR(MEMBER_NM, #{item_keyword})>0
+					OR INSTR(b.GROUP_NM, #{item_keyword})>0
+					OR INSTR(a.RESPONSIBILITIES, #{item_keyword})>0
+				</foreach>
+				<if test='in_keyword_yn == "Y"'>
+					AND 
+					<foreach collection="in_keyword_list" item="item_keyword" separator="or" open="(" close=")">
+					INSTR(MEMBER_NM, #{item_keyword})>0
+					OR INSTR(b.GROUP_NM, #{item_keyword})>0
+					OR INSTR(a.RESPONSIBILITIES, #{item_keyword})>0
+					</foreach>
+				</if>
+				)
+		) PT1
+		WHERE CEIL(RN/COALESCE(#{rows, jdbcType=INTEGER},10))=COALESCE(#{cpage, jdbcType=INTEGER},1)
+	</select>
+	
+	<select id="mem_page_info" parameterType="Map" resultType="mcmap">
+	    SELECT
+	        CEIL(COUNT(1)/COALESCE(#{rows}, 10)) TOTALPAGE,
+	        COUNT(1) TOTALCOUNT
+        FROM MC_MEMBER a LEFT JOIN MC_GROUP b
+        ON a.GROUP_SEQ=b.GROUP_SEQ
+		WHERE a.DEL_YN='N' AND a.GROUP_SEQ NOT IN(1,2)
+			AND(
+			<foreach collection="keyword_list" item="item_keyword" separator="or" open="(" close=")">
+				INSTR(MEMBER_NM, #{item_keyword})>0
+				OR INSTR(b.GROUP_NM, #{item_keyword})>0
+				OR INSTR(a.RESPONSIBILITIES, #{item_keyword})>0
+			</foreach>
+			<if test='in_keyword_yn == "Y"'>
+				AND 
+				<foreach collection="in_keyword_list" item="item_keyword" separator="or" open="(" close=")">
+				INSTR(MEMBER_NM, #{item_keyword})>0
+				OR INSTR(b.GROUP_NM, #{item_keyword})>0
+				OR INSTR(a.RESPONSIBILITIES, #{item_keyword})>0
+				</foreach>
+			</if>
+			)
+	</select>
+    
+	<select id="rank_day" parameterType="Map" resultType="mcmap">
+    <![CDATA[
+		SELECT
+		    t1.*
+		FROM (
+		    SELECT
+		        MAX(SEQ) AS SEQ,
+		        SEARCH_TEXT, RANK() OVER(ORDER BY SUM(SEARCH_COUNT) DESC) AS RANK
+		    FROM (
+		        SELECT
+		            SEQ, SEARCH_TEXT, SEARCH_COUNT 
+		        FROM MC_SEARCH_TEXT a 
+		        WHERE SEARCH_DATE > SYSDATE-1
+		    )
+		    GROUP BY SEARCH_TEXT
+		) t1
+		WHERE ROWNUM <= 10
+		ORDER BY RANK ASC, SEQ DESC
+	]]>		    	
+    </select>
+    
+	<select id="rank_week" parameterType="Map" resultType="mcmap">
+    <![CDATA[
+		SELECT
+		    t1.*
+		FROM (
+		    SELECT
+		        MAX(SEQ) AS SEQ,
+		        SEARCH_TEXT, RANK() OVER(ORDER BY SUM(SEARCH_COUNT) DESC) AS RANK
+		    FROM (
+		        SELECT
+		            SEQ, SEARCH_TEXT, SEARCH_COUNT 
+		        FROM MC_SEARCH_TEXT a 
+		        WHERE SEARCH_DATE > sysdate-7
+		    )
+		    GROUP BY SEARCH_TEXT
+		) t1
+		WHERE ROWNUM <= 10
+		ORDER BY RANK ASC, SEQ DESC
+	]]>		    	
+    </select>
+    
+	<select id="rank_month" parameterType="Map" resultType="mcmap">
+    <![CDATA[
+		SELECT
+		    t1.*
+		FROM (
+		    SELECT
+		        MAX(SEQ) AS SEQ,
+		        SEARCH_TEXT, RANK() OVER(ORDER BY SUM(SEARCH_COUNT) DESC) AS RANK
+		    FROM (
+		        SELECT
+		            SEQ, SEARCH_TEXT, SEARCH_COUNT 
+		        FROM MC_SEARCH_TEXT a 
+		        WHERE SEARCH_DATE > add_months(sysdate,-1)
+		    )
+		    GROUP BY SEARCH_TEXT
+		) t1
+		WHERE ROWNUM <= 10
+		ORDER BY RANK ASC, SEQ DESC
+	]]>		    	
+    </select>
+    
+    <select id="search_text_insert" parameterType="Map" resultType="mcmap">
+    	INSERT INTO MC_SEARCH_TEXT (
+    		SEQ
+    		,SEARCH_TEXT
+    		,SEARCH_DATE
+    		,SEARCH_COUNT    		
+    	)VALUES(
+    		SEQ_MC_SEARCH_TEXT.NEXTVAL
+    		,#{keyword}
+    		,TO_DATE(to_CHAR(sysdate,'yyyy-mm-dd hh24'), 'yyyy-mm-dd hh24')
+    		,1
+    	)		    	
+    </select>
+    
+    <select id="search_text_select" parameterType="Map" resultType="mcmap">
+    	SELECT 
+    		SEQ MC_SEARCH_SEQ
+    	FROM 
+    		MC_SEARCH_TEXT 
+    	WHERE
+    		SEARCH_DATE = TO_DATE(to_CHAR(sysdate,'yyyy-mm-dd hh24'), 'yyyy-mm-dd hh24')
+    		AND SEARCH_TEXT = #{keyword}
+    </select>
+    
+    <update id="search_text_update" parameterType="Map">
+		UPDATE MC_SEARCH_TEXT SET
+			SEARCH_COUNT = SEARCH_COUNT+1
+		WHERE
+			SEQ = #{mc_search_seq}
+    </update>
+    
+    <select id="autocomplete" resultType="String">
+    <![CDATA[
+		SELECT distinct PT1.SEARCH_TEXT FROM (
+            SELECT
+                rownum RN,
+                a.*
+            FROM MC_SEARCH_TEXT a
+            ORDER BY SEQ DESC
+        ) PT1
+        WHERE PT1.RN<10000
+    ]]>
+    </select>
+</mapper>

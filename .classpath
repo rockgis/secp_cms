@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<classpath>
+	<classpathentry kind="src" output="target/classes" path="src/main/java">
+		<attributes>
+			<attribute name="optional" value="true"/>
+			<attribute name="maven.pomderived" value="true"/>
+		</attributes>
+	</classpathentry>
+	<classpathentry excluding="**" kind="src" output="target/classes" path="src/main/resources">
+		<attributes>
+			<attribute name="maven.pomderived" value="true"/>
+		</attributes>
+	</classpathentry>
+	<classpathentry kind="src" output="target/test-classes" path="src/test/java">
+		<attributes>
+			<attribute name="optional" value="true"/>
+			<attribute name="maven.pomderived" value="true"/>
+		</attributes>
+	</classpathentry>
+	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER/org.eclipse.jdt.internal.debug.ui.launcher.StandardVMType/JavaSE-1.8">
+		<attributes>
+			<attribute name="maven.pomderived" value="true"/>
+		</attributes>
+	</classpathentry>
+	<classpathentry kind="con" path="org.eclipse.m2e.MAVEN2_CLASSPATH_CONTAINER">
+		<attributes>
+			<attribute name="maven.pomderived" value="true"/>
+			<attribute name="org.eclipse.jst.component.dependency" value="/WEB-INF/lib"/>
+		</attributes>
+	</classpathentry>
+	<classpathentry kind="lib" path="src/main/webapp/WEB-INF/lib/Altibase.jar"/>
+	<classpathentry kind="lib" path="src/main/webapp/WEB-INF/lib/gpkisecureweb-1.0.4.9.jar"/>
+	<classpathentry kind="lib" path="src/main/webapp/WEB-INF/lib/IPINClient.jar"/>
+	<classpathentry kind="lib" path="src/main/webapp/WEB-INF/lib/JDBC-10.1.2.7694-cubrid.jar"/>
+	<classpathentry kind="lib" path="src/main/webapp/WEB-INF/lib/korean-text-4.3.1_customize.jar"/>
+	<classpathentry kind="lib" path="src/main/webapp/WEB-INF/lib/libgpkiapi_jni-1.4.0.0.jar"/>
+	<classpathentry kind="lib" path="src/main/webapp/WEB-INF/lib/log4j-api-2.17.1.jar"/>
+	<classpathentry kind="lib" path="src/main/webapp/WEB-INF/lib/log4j-core-2.17.1.jar"/>
+	<classpathentry kind="lib" path="src/main/webapp/WEB-INF/lib/log4j-slf4j-impl-2.17.1.jar"/>
+	<classpathentry kind="lib" path="src/main/webapp/WEB-INF/lib/MC@CMS.v1.5.pro.jar"/>
+	<classpathentry kind="lib" path="src/main/webapp/WEB-INF/lib/MC@CMS.v1.5.pro.license.jar"/>
+	<classpathentry kind="lib" path="src/main/webapp/WEB-INF/lib/NiceID_ibm.jar.server"/>
+	<classpathentry kind="lib" path="src/main/webapp/WEB-INF/lib/NiceID.jar"/>
+	<classpathentry kind="lib" path="src/main/webapp/WEB-INF/lib/ojdbc14.jar.10g"/>
+	<classpathentry kind="lib" path="src/main/webapp/WEB-INF/lib/ojdbc6.jar"/>
+	<classpathentry kind="lib" path="src/main/webapp/WEB-INF/lib/simplecaptcha-1.2.1.jar"/>
+	<classpathentry kind="lib" path="src/main/webapp/WEB-INF/lib/smeapi_2_7.jar"/>
+	<classpathentry kind="lib" path="src/main/webapp/WEB-INF/lib/thumbnailator-0.4.5.sportal.jar"/>
+	<classpathentry kind="lib" path="src/main/webapp/WEB-INF/lib/tibero6-jdbc.jar"/>
+	<classpathentry kind="output" path="target/classes"/>
+</classpath>

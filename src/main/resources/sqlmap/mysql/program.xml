@@ -1,0 +1,100 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="Program">
+	
+	<sql id="listWhere">
+		WHERE a.DEL_YN='N'
+				<if test="!(keyword == null or keyword == '')" >
+					<choose>
+						<when test="condition == 'program_nm'.toString()">AND PROGRAM_NM like CONCAT('%',#{keyword},'%')</when>
+						<when test="condition == 'url'.toString()">AND URL like CONCAT('%',#{keyword},'%')</when>
+					</choose>
+        		</if>
+		<if test="!(start_dt == null or start_dt == '') and !(end_dt == null or end_dt == '')" >
+			AND DATE_FORMAT(a.REG_DT, '%Y-%m-%d') BETWEEN #{start_dt} AND #{end_dt}
+      	</if>
+	</sql>
+	
+	<select id="list" parameterType="Map" resultType="mcmap">
+		SELECT A.*
+		FROM
+		(
+		SELECT CAST(@ROWNUM:=@ROWNUM+1 AS SIGNED) AS RN, TB.*
+		FROM(
+			SELECT
+			    a.*, COALESCE(b.USER_PAGE_CNT, 0) AS USER_PAGE_CNT
+			FROM MC_PROGRAMS a LEFT OUTER JOIN (SELECT TARGET_URL, COUNT(1) AS USER_PAGE_CNT FROM MC_CMS_MENU WHERE TARGET_URL <![CDATA[ <> ]]> '' AND TARGET_URL IS NOT NULL AND DEL_YN = 'N' AND  MENU_TYPE = '3' GROUP BY TARGET_URL) b
+			ON a.URL = b.TARGET_URL
+			<include refid="listWhere"/>
+			ORDER BY SEQ DESC
+		) AS TB, 
+		(SELECT @ROWNUM:=0) AS R
+		)AS A
+		WHERE CEIL(RN/IFNULL(#{rows},10))=IFNULL(#{cpage},1)
+	</select>
+	
+	<select id="pagination" parameterType="Map" resultType="mcmap">
+	    SELECT
+	        CEIL(COUNT(1)/IFNULL(#{rows}, 10)) TOTALPAGE,
+	        COUNT(1) TOTALCOUNT
+	    FROM MC_PROGRAMS a
+	    <include refid="listWhere"/>
+	</select>
+	
+	<select id="menu_list" parameterType="Map" resultType="mcmap">
+		SELECT  
+			sg.CMS_MENU_SEQ, sg.PARENT_MENU_SEQ, sg.TITLE, sg.MENU_ORDER, sg.SITE_ID, sg.MENU_URL, sg.TARGET_URL, sg.BLANK_YN, sg.CHILD_TYPE, sg.TOP_YN, sg.MENU_TYPE, sg.DEL_YN, sg.USE_YN
+			, DATE_FORMAT(sg.REG_DT, '%Y-%m-%d') AS REG_DT,
+			SUBSTR(SYS_CONNECT_BY_PATH_MENU(sg.CMS_MENU_SEQ, '>'), 2) AS PAGE_NAVI,
+			sys_connect_by_path_menu_order(sg.CMS_MENU_SEQ, '_') AS order_menu_set
+		FROM    (
+		        SELECT  start_with_connect_by_memu() AS PARENT_MENU_SEQ, @level AS MENU_LEVEL
+		        FROM    (
+		                SELECT  @start_with := 0,
+		                        @id := @start_with,
+		                        @level := 0,
+		                        @rn := 0
+		                ) vars, MC_CMS_MENU
+		        ) sg2
+		JOIN    MC_CMS_MENU sg
+		ON      sg.CMS_MENU_SEQ = sg2.PARENT_MENU_SEQ
+		WHERE sg.TARGET_URL = #{menu_url} AND sg.MENU_TYPE = '3'
+		ORDER BY order_menu_set
+	</select>
+	
+	<update id="modify" parameterType="Map">
+		UPDATE MC_PROGRAMS SET
+			PROGRAM_NM = 				#{program_nm}
+			, URL = 					#{url}
+			, MANAGE_URL = 					#{manage_url}
+			, MOD_ID = 				#{session_member_id}
+			, MOD_NM = 				#{session_member_nm}
+			, MOD_DT = 				sysdate()
+		WHERE SEQ = #{seq}
+	</update>
+	
+	<update id="write" parameterType="Map">
+		INSERT INTO MC_PROGRAMS(
+			PROGRAM_NM, URL, MANAGE_URL, REG_ID, REG_NM, REG_DT, DEL_YN
+		)VALUES(
+			#{program_nm}, #{url}, #{manage_url}, #{session_member_id}, #{session_member_nm}, sysdate(), 'N' 
+		)
+	</update>
+	
+	<select id="view" parameterType="Map" resultType="mcmap">
+		SELECT
+			SEQ, PROGRAM_NM, URL, MANAGE_URL, REG_ID, REG_NM, REG_DT, DEL_YN
+		FROM MC_PROGRAMS 
+		WHERE SEQ = #{seq} 
+	</select>
+	
+	<update id="del" parameterType="Map">
+		UPDATE MC_PROGRAMS SET
+			DEL_YN = 'Y'
+			,DEL_ID = #{session_member_id}
+			,DEL_NM = #{session_member_nm}
+			,DEL_DT = sysdate()
+		WHERE SEQ = #{seq} 
+	</update>
+	
+</mapper>

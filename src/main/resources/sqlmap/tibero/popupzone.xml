@@ -1,0 +1,195 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="popupzone">
+
+	<select id="list" parameterType="Map" resultType="mcmap">
+		SELECT PT1.* FROM (
+			SELECT 
+				ROWNUM RN,
+				T1.*
+			FROM (
+				SELECT 
+					T1.POPUPZONE_SEQ, T1.TITLE, T1.LINK_YN, T1.LINK_URL, T1.LINK_TARGET, T1.FILE_PATH,
+					T1.USE_YN, T1.ORDER_SEQ, T1.REG_DT, T1.REG_ID, T1.REG_NM, T1.MOD_DT, T1.MOD_ID, T1.MOD_NM,
+					T1.START_DT, T1.END_DT, T1.ALT,
+					CASE WHEN T1.REG_DT >= SYSDATE-3 THEN 'Y' ELSE 'N' END NEW_YN
+				FROM MC_POPUPZONE T1
+		        WHERE T1.DEL_YN = 'N'
+		        AND T1.SITE_ID = NVL(#{site_id},1)
+		        AND T1.SELECTER in (#{selecter})
+				<if test="!(use_yn == null or use_yn == '')" >
+				AND T1.USE_YN = #{use_yn}
+				</if>
+				<if test="!(keyword == null or keyword == '')" >
+					<choose>
+						<when test="condition == 'title'.toString()">AND T1.TITLE like '%'||#{keyword}||'%'</when>
+					</choose>
+        		</if>
+				ORDER BY USE_YN DESC, TO_NUMBER(ORDER_SEQ) ASC, POPUPZONE_SEQ DESC
+			) T1
+		) PT1
+		WHERE RN BETWEEN NVL(#{rows, jdbcType=INTEGER},10) * (NVL(#{cpage, jdbcType=INTEGER},1) - 1) + 1 AND NVL(#{rows, jdbcType=INTEGER},10) * NVL(#{cpage, jdbcType=INTEGER},1)
+	</select>
+	
+	<select id="pageinfo" parameterType="Map" resultType="mcmap">
+		SELECT 
+			CEIL(COUNT(1) / NVL(#{rows, jdbcType=INTEGER} ,10)) TOTALPAGE,
+			COUNT(1) TOTALCOUNT
+		FROM 
+			MC_POPUPZONE T1
+		WHERE
+		T1.DEL_YN = 'N'
+		AND T1.SITE_ID = NVL(#{site_id},1)
+		AND T1.SELECTER in (#{selecter})
+		<if test="!(use_yn == null or use_yn == '')" >
+		AND T1.USE_YN = #{use_yn}
+		</if>
+		<if test="!(keyword == null or keyword == '')" >
+			<choose>
+				<when test="condition == 'title'.toString()">AND T1.TITLE like '%'||#{keyword}||'%'</when>
+			</choose>
+      	</if>
+	</select>
+	
+	<insert id="insert" parameterType="Map">
+		<selectKey keyProperty="order_seq" resultType="int" order="BEFORE">
+			SELECT NVL(MAX(ORDER_SEQ),0)+1 FROM MC_POPUPZONE WHERE DEL_YN = 'N' AND SITE_ID = #{site_id} AND SELECTER = #{selecter}
+		</selectKey>
+		INSERT INTO MC_POPUPZONE(
+			  POPUPZONE_SEQ,
+			  TITLE,
+			  LINK_YN,
+			  LINK_URL,
+			  LINK_TARGET,
+			  FILE_PATH,
+			  USE_YN,
+			  <if test="!(order_seq == null or order_seq == '')">
+			  ORDER_SEQ,
+			  </if>
+			  REG_ID,
+			  REG_NM,
+			  START_DT,
+			  END_DT,
+			  ALT,
+			  SELECTER,
+			  SITE_ID
+			   <if test="!(x_coord == null or x_coord == '')">
+			  ,X_COORD
+			  </if>
+			  <if test="!(y_coord == null or y_coord == '')">
+			  ,Y_COORD
+			  </if>			 
+		)values(
+			  SEQ_MC_POPUPZONE.nextval,
+			  #{title},
+			  #{link_yn},
+			  #{link_url},
+			  #{link_target},
+			  #{file_path},
+			  #{use_yn},
+			  <if test="!(order_seq == null or order_seq == '')">
+			  #{order_seq},
+			  </if>
+			  #{session_member_id},
+			  #{session_member_nm},
+			  TO_DATE(#{start_dt}, 'YYYY-MM-DD'),
+			  TO_DATE(#{end_dt}, 'YYYY-MM-DD'),
+			  #{alt},
+			  #{selecter},
+			  #{site_id}
+			  <if test="!(x_coord == null or x_coord == '')">
+			  ,#{x_coord}
+			  </if>
+			  <if test="!(y_coord == null or y_coord == '')">
+			  ,#{y_coord}
+			  </if>
+		)
+	</insert>
+	
+	<select id="view" parameterType="Map" resultType="mcmap">
+		SELECT
+			POPUPZONE_SEQ,
+			TITLE,
+			LINK_YN,
+			LINK_URL,
+			LINK_TARGET,
+			FILE_PATH,
+			USE_YN,
+			ORDER_SEQ,
+			TO_CHAR(REG_DT,'YYYY-MM-DD') REG_DT,
+			REG_ID,
+			REG_NM,
+			TO_CHAR(START_DT,'YYYY-MM-DD') START_DT,
+			TO_CHAR(END_DT,'YYYY-MM-DD') END_DT,
+			ALT,
+			SELECTER,
+			X_COORD,
+			Y_COORD
+		FROM MC_POPUPZONE
+		WHERE POPUPZONE_SEQ=#{popupzone_seq}
+	</select>
+	
+	<update id="update" parameterType="Map">
+		UPDATE MC_POPUPZONE SET
+		TITLE=#{title},
+		LINK_YN=#{link_yn},
+		LINK_URL=#{link_url},
+		LINK_TARGET=#{link_target},
+		FILE_PATH=#{file_path},
+		USE_YN=#{use_yn},
+		START_DT=TO_DATE(#{start_dt}, 'YYYY-MM-DD'),
+		END_DT=TO_DATE(#{end_dt}, 'YYYY-MM-DD'),
+		ORDER_SEQ=#{order_seq},
+		ALT=#{alt},
+		MOD_DT=SYSDATE, 
+		MOD_ID=#{session_member_id}, 
+		MOD_NM=#{session_member_nm}
+		<if test="!(x_coord == null or x_coord == '')">
+		,X_COORD=#{x_coord}
+		</if>
+		<if test="!(y_coord == null or y_coord == '')">
+		,Y_COORD=#{y_coord}
+		</if>
+		WHERE POPUPZONE_SEQ=#{popupzone_seq}
+	</update>
+
+	<update id="delete" parameterType="Map">
+		UPDATE MC_POPUPZONE SET DEL_YN='Y', DEL_DT=SYSDATE, DEL_ID=#{session_member_id}, DEL_NM=#{session_member_nm}
+		WHERE POPUPZONE_SEQ in 
+ 		<foreach collection="seq_list" separator="," index="index" open="(" close=")" item="item" >
+ 		 	#{item}
+ 		</foreach>  
+	</update> 
+	
+	<update id="sort" parameterType="Map">
+		UPDATE MC_POPUPZONE SET
+		ORDER_SEQ=#{order_seq},
+		MOD_DT=SYSDATE, 
+		MOD_ID=#{session_member_id}, 
+		MOD_NM=#{session_member_nm}
+		WHERE POPUPZONE_SEQ=#{popupzone_seq}
+	</update>
+	
+	<select id="main_popup" parameterType="Map" resultType="mcmap">
+		SELECT PT1.* FROM (
+		SELECT 
+			T1.POPUPZONE_SEQ, T1.TITLE, T1.LINK_YN, T1.LINK_URL, T1.LINK_TARGET, T1.FILE_PATH,
+			T1.USE_YN, T1.ORDER_SEQ, T1.REG_DT, T1.REG_ID, T1.REG_NM, T1.MOD_DT, T1.MOD_ID, T1.MOD_NM,
+			T1.START_DT, T1.END_DT, T1.ALT, T1.X_COORD, T1.Y_COORD
+		FROM MC_POPUPZONE T1
+        WHERE T1.DEL_YN = 'N'
+        AND T1.USE_YN = 'Y'
+        AND T1.SITE_ID = NVL(#{site_id},1)
+        AND T1.SELECTER in (#{selecter})
+        <![CDATA[
+        AND (T1.START_DT <= SYSDATE AND T1.END_DT >= SYSDATE-1)
+        ORDER BY TO_NUMBER(ORDER_SEQ) ASC, POPUPZONE_SEQ DESC
+        ) PT1
+		]]>
+	</select>  
+	
+	<select id="popup_type" parameterType="String" resultType="mcmap">
+		SELECT POPUP_TYPE FROM mc_cms_menu WHERE cms_menu_seq = #{site_id}
+	</select>
+	
+</mapper>

@@ -1,0 +1,316 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="AdminUser">
+	
+	<sql id="listWhere">
+		WHERE a.DEL_YN='N'
+			<choose>
+				<when test="shoseong == 'ㄱ'.toString()"><![CDATA[	AND a.MEMBER_NM > '가' AND a.MEMBER_NM <= '깋'	]]></when>
+				<when test="shoseong == 'ㄴ'.toString()"><![CDATA[	AND a.MEMBER_NM > '나' AND a.MEMBER_NM <= '닣'	]]></when>
+				<when test="shoseong == 'ㄷ'.toString()"><![CDATA[	AND a.MEMBER_NM > '다' AND a.MEMBER_NM <= '딯'	]]></when>
+				<when test="shoseong == 'ㄹ'.toString()"><![CDATA[	AND a.MEMBER_NM > '라' AND a.MEMBER_NM <= '맇'	]]></when>
+				<when test="shoseong == 'ㅁ'.toString()"><![CDATA[	AND a.MEMBER_NM > '마' AND a.MEMBER_NM <= '밓'	]]></when>
+				<when test="shoseong == 'ㅂ'.toString()"><![CDATA[	AND a.MEMBER_NM > '바' AND a.MEMBER_NM <= '빟'	]]></when>
+				<when test="shoseong == 'ㅅ'.toString()"><![CDATA[	AND a.MEMBER_NM > '사' AND a.MEMBER_NM <= '싷'	]]></when>
+				<when test="shoseong == 'ㅇ'.toString()"><![CDATA[	AND a.MEMBER_NM > '아' AND a.MEMBER_NM <= '잏'	]]></when>
+				<when test="shoseong == 'ㅈ'.toString()"><![CDATA[	AND a.MEMBER_NM > '자' AND a.MEMBER_NM <= '짛'	]]></when>
+				<when test="shoseong == 'ㅊ'.toString()"><![CDATA[	AND a.MEMBER_NM > '차' AND a.MEMBER_NM <= '칳'	]]></when>
+				<when test="shoseong == 'ㅋ'.toString()"><![CDATA[	AND a.MEMBER_NM > '카' AND a.MEMBER_NM <= '킿'	]]></when>
+				<when test="shoseong == 'ㅌ'.toString()"><![CDATA[	AND a.MEMBER_NM > '타' AND a.MEMBER_NM <= '팋'	]]></when>
+				<when test="shoseong == 'ㅍ'.toString()"><![CDATA[	AND a.MEMBER_NM > '파' AND a.MEMBER_NM <= '핗'	]]></when>
+				<when test="shoseong == 'ㅎ'.toString()"><![CDATA[	AND a.MEMBER_NM > '하' AND a.MEMBER_NM <= '힣'	]]></when>
+				<when test="shoseong == 'A'.toString()"><![CDATA[	AND a.MEMBER_NM > 'a' AND a.MEMBER_NM <= 'Z'	]]></when>
+				<when test="shoseong == '0'.toString()"><![CDATA[	AND a.MEMBER_NM > '0' AND a.MEMBER_NM <= '9'	]]></when>
+			</choose>
+			<if test = "!(group_seq == '' or group_seq == null)">
+			AND a.GROUP_SEQ in (
+				SELECT 
+					GROUP_SEQ
+				FROM MC_GROUP
+				START WITH DEL_YN='N' AND PARENT_SEQ = #{group_seq} OR GROUP_SEQ = #{group_seq}
+				CONNECT BY PRIOR GROUP_SEQ = PARENT_SEQ
+			)
+			</if>
+		<if test="!(keyword == null or keyword == '')" >
+			<choose>
+				<when test="condition == 'member_nm'.toString()">AND a.MEMBER_NM like '%'||#{keyword}||'%'</when>
+				<when test="condition == 'member_id'.toString()">AND a.MEMBER_ID like '%'||#{keyword}||'%'</when>
+				<when test="condition == 'group_nm'.toString()">AND b.GROUP_NM like CONCAT('%',#{keyword},'%')</when>
+			</choose>
+      	</if>
+		<if test="!(email_yn == null or email_yn == '')" >
+			AND a.EMAIL_YN = #{email_yn}
+      	</if>
+		<if test="!(sms_yn == null or sms_yn == '')" >
+			AND a.SMS_YN = #{sms_yn}
+      	</if>
+		<if test="!(block_yn == null or block_yn == '')" >
+			AND a.BLOCK_YN = #{block_yn}
+      	</if>
+		<if test="!(dormancy_yn == null or dormancy_yn == '')" >
+			AND a.DORMANCY_YN = #{dormancy_yn}
+      	</if>
+	</sql>
+	
+	<select id="list" parameterType="Map" resultType="mcmap">
+		SELECT PT1.* FROM (
+            SELECT
+            	ROW_NUMBER()OVER( 
+				<choose>
+					<when test="!(sort_nm == null or sort_nm == '')">ORDER BY 
+						<choose>
+							<when test="sort_nm == 'member_id'.toString()"> MEMBER_ID </when>
+							<when test="sort_nm == 'member_nm'.toString()"> MEMBER_NM </when>
+							<when test="sort_nm == 'group_nm'.toString()"> GROUP_NM </when>
+							<when test="sort_nm == 'tel'.toString()"> TEL </when>
+							<when test="sort_nm == 'cell'.toString()"> CELL </when>
+							<when test="sort_nm == 'order_seq'.toString()"> ORDER_SEQ </when>
+						</choose> 
+						<choose>
+							<when test="sort == 'desc'.toString()"> DESC </when>
+							<when test="sort == 'asc'.toString()"> ASC </when>
+						</choose>
+					</when>
+					<otherwise>ORDER BY MEMBER_ID ASC</otherwise>
+				</choose>
+            	) RN,
+				a.*,
+                b.GROUP_NM
+            FROM MC_MEMBER a LEFT JOIN MC_GROUP b
+            ON a.GROUP_SEQ=b.GROUP_SEQ
+            , (SELECT DORMANCY_DAY FROM MC_BASIC_SETTING WHERE SITE_ID=1) s
+            <include refid="listWhere"/>
+        ) PT1
+		WHERE RN BETWEEN NVL(#{rows, jdbcType=INTEGER},10) * (NVL(#{cpage, jdbcType=INTEGER},1) - 1) + 1 AND NVL(#{rows, jdbcType=INTEGER},10) * NVL(#{cpage, jdbcType=INTEGER},1)
+	</select>
+	
+	<select id="pagination" parameterType="Map" resultType="mcmap">
+	    SELECT
+	        CEIL(COUNT(1)/NVL(#{rows}, 10)) TOTALPAGE,
+	        COUNT(1) TOTALCOUNT
+        FROM MC_MEMBER a LEFT JOIN MC_GROUP b
+        ON a.GROUP_SEQ=b.GROUP_SEQ
+        , (SELECT DORMANCY_DAY FROM MC_BASIC_SETTING WHERE SITE_ID=1) s
+		<include refid="listWhere"/>
+	</select>
+	
+	<select id="getMemberIdCnt" parameterType="Map" resultType="mcmap">
+		SELECT 
+            COUNT(1) AS CNT
+        FROM 
+        	MC_MEMBER A
+        WHERE 
+        	MEMBER_ID = #{member_id}
+	</select>
+	
+	<update id="updateMemberLastLogin" parameterType="Map">
+		UPDATE MC_MEMBER SET 
+			LAST_LOGIN = sysdatetime
+		WHERE MEMBER_ID = #{member_id}
+	</update>
+	
+	<update id="modify" parameterType="Map">
+		UPDATE MC_MEMBER SET
+			MEMBER_NM = 			#{member_nm}
+			, EMAIL = 				#{email}
+			, TEL = 				#{tel}
+			, CELL = 				#{cell}
+			, GROUP_SEQ = 			#{group_seq}
+			, RESPONSIBILITIES = 				#{responsibilities}
+			, MOD_ID = 				#{session_member_id}
+			, MOD_NM = 				#{session_member_nm}
+			, MOD_DT = 				sysdatetime
+			, MOD_IP = 				#{session_ip}
+			, USE_YN = 				#{use_yn}
+			, POSITIONS =			#{positions}
+			<if test="!(member_pw == null or member_pw == '')" >
+			, MEMBER_PW = #{member_pw}
+			</if>
+		WHERE MEMBER_ID = #{member_id}
+	</update>
+	
+	<update id="write" parameterType="Map">
+		INSERT INTO MC_MEMBER(
+			MEMBER_ID, MEMBER_PW, MEMBER_NM, EMAIL, TEL, CELL, GROUP_SEQ, RESPONSIBILITIES, POSITIONS, USE_YN, DEL_YN, EMAIL_YN, SMS_YN, BIRTH, DI, LAST_PW_DT, LAST_LOGIN, REG_DT
+		)VALUES(
+			#{member_id}, #{member_pw}, #{member_nm}, #{email}, #{tel}, #{cell}, #{group_seq}, nvl(#{responsibilities}, ''), nvl(#{positions}, ''), 'Y', 'N', #{email_yn}, #{sms_yn}, #{birth}, #{di}, sysdatetime, sysdatetime, sysdatetime
+		)
+	</update>
+	
+	<select id="view" parameterType="Map" resultType="mcmap">
+		SELECT
+			MEMBER_ID, MEMBER_NM, EMAIL, TEL, CELL, GROUP_SEQ, TO_CHAR(LAST_LOGIN, 'YYYY-MM-DD HH24:MI:SS') as LAST_LOGIN, RESPONSIBILITIES, POSITIONS, BLOCK_YN, MOD_ID, MOD_NM, MOD_DT, DEL_ID, DEL_NM, DEL_DT, USE_YN, DEL_YN,
+			FN_GET_SPLIT(TEL, 1, '-', '') as TEL1, FN_GET_SPLIT(TEL, 2, '-', '') as TEL2, FN_GET_SPLIT(TEL, 3, '-', '') as TEL3,
+			FN_GET_SPLIT(CELL, 1, '-', '') as CELL1, FN_GET_SPLIT(CELL, 2, '-', '') as CELL2, FN_GET_SPLIT(CELL, 3, '-', '') as CELL3,
+			FN_GET_SPLIT(EMAIL, 1, '@', '') as EMAIL1, FN_GET_SPLIT(EMAIL, 2, '@', '') as EMAIL2
+		FROM MC_MEMBER 
+		WHERE MEMBER_ID = #{member_id} 
+	</select>
+	
+	<update id="init_pw" parameterType="Map">
+		UPDATE MC_MEMBER SET
+			MEMBER_PW = #{member_pw}
+			, MOD_ID = 				#{session_member_id}
+			, MOD_NM = 				#{session_member_nm}
+			, MOD_DT = 				sysdatetime
+			, MOD_IP = 				#{session_ip}
+			, LAST_PW_DT = 	sysdatetime
+		WHERE MEMBER_ID = #{member_id} 
+	</update>
+	
+	<update id="updateOrder" parameterType="Map">
+		UPDATE MC_MEMBER SET
+			ORDER_SEQ=#{order_seq}
+			,MOD_ID = #{session_member_id}
+			,MOD_NM = #{session_member_nm}
+			,MOD_DT = sysdatetime
+			, MOD_IP = 				#{session_ip}
+		WHERE MEMBER_ID = #{member_id} 
+	</update>
+	
+	<update id="del" parameterType="Map">
+		DELETE FROM MC_MEMBER WHERE MEMBER_ID IN 
+ 		<foreach collection="seq_list" separator="," open="(" close=")" item="item" >
+ 		 	#{item}
+ 		</foreach>  
+	</update>
+	
+	<select id="getMemberById" parameterType="Map" resultType="mcmap">
+	<![CDATA[
+        SELECT 
+        	MEMBER_ID, MEMBER_PW, MEMBER_NM, EMAIL, TEL, CELL, GROUP_SEQ, TO_CHAR(LAST_LOGIN, 'YYYY-MM-DD HH24:MI:SS') as LAST_LOGIN, RESPONSIBILITIES, USE_YN, BLOCK_YN, LOGIN_FAIL_CNT, TO_CHAR(LAST_PW_DT, 'YYYY-MM-DD') as LAST_PW_DT, DORMANCY_YN
+        FROM MC_MEMBER
+	    WHERE MEMBER_ID = #{member_id}
+	]]> 
+	</select>
+	
+	<select id="getMemberByIdPw" parameterType="Map" resultType="mcmap">
+	<![CDATA[
+        SELECT 
+        	MEMBER_ID, MEMBER_NM, EMAIL, TEL, CELL, GROUP_SEQ, TO_CHAR(LAST_LOGIN, 'YYYY-MM-DD HH24:MI:SS') as LAST_LOGIN, RESPONSIBILITIES, USE_YN, BLOCK_YN, LOGIN_FAIL_CNT, TO_CHAR(LAST_PW_DT, 'YYYY-MM-DD') as LAST_PW_DT
+        FROM MC_MEMBER
+	    WHERE MEMBER_ID = #{member_id}
+	    	AND MEMBER_PW = #{member_pw}
+	]]> 
+	</select>
+	
+	<update id="updateGroup" parameterType="Map">
+		UPDATE MC_MEMBER SET
+			GROUP_SEQ=#{group_seq}
+			,MOD_ID = #{session_member_id}
+			,MOD_NM = #{session_member_nm}
+			,MOD_DT = sysdatetime
+			, MOD_IP = 				#{session_ip}
+		WHERE MEMBER_ID = #{member_id} 
+	</update>
+	
+	<update id="loginFailCntIncrease" parameterType="Map">
+	<![CDATA[
+		UPDATE MC_MEMBER
+		SET LOGIN_FAIL_CNT = 
+				CASE 
+					WHEN LOGIN_FAIL_CNT < 5 THEN LOGIN_FAIL_CNT + 1
+					ELSE LOGIN_FAIL_CNT
+				END
+			,  BLOCK_YN =
+				CASE
+					WHEN LOGIN_FAIL_CNT >= 4 THEN 'Y'
+					ELSE BLOCK_YN
+				END
+		WHERE MEMBER_ID = #{member_id}
+		AND GROUP_SEQ <> 1
+	]]> 
+	<selectKey keyProperty="fail_cnt" resultType="int" order="AFTER">
+	<![CDATA[
+		SELECT LOGIN_FAIL_CNT FROM MC_MEMBER WHERE MEMBER_ID = #{member_id}
+	]]> 
+	</selectKey>
+	</update>
+	
+	<update id="loginFailCntInit" parameterType="String">
+	<![CDATA[
+		UPDATE MC_MEMBER
+		SET LOGIN_FAIL_CNT = 0, BLOCK_YN = 'N'
+		WHERE MEMBER_ID = #{value}
+	]]> 
+	</update>
+	
+	<select id="allow_menu_list" parameterType="String" resultType="String">
+	    SELECT
+			DISTINCT cms_menu_seq
+		FROM(
+			SELECT
+				cms_menu_seq
+			FROM MC_CMS_STAFF_GROUP
+			WHERE GROUP_SEQ=#{group_seq}
+			UNION ALL
+			SELECT
+				cms_menu_seq
+			FROM MC_CMS_STAFF
+			WHERE GROUP_SEQ=#{group_seq}
+			UNION ALL
+			SELECT
+				cms_menu_seq
+			FROM MC_CMS_PERMISSION
+			WHERE GROUP_SEQ=#{group_seq}
+		) t
+	</select>
+	
+	<select id="niceDIChk" parameterType="Map" resultType="int">
+	    SELECT COUNT(1) as CNT FROM MC_MEMBER WHERE DI=#{di}
+	</select>
+	
+	<select id="getDiMember" parameterType="Map" resultType="mcmap">
+	    SELECT
+	    	MEMBER_ID, MEMBER_NM, EMAIL, TEL, CELL, TO_CHAR(REG_DT, 'YYYY-MM-DD') as REG_DT
+	    FROM MC_MEMBER WHERE DI=#{di}
+	</select>
+	
+	<select id="memberHistoryList" parameterType="Map" resultType="mcmap">
+		SELECT PT1.* FROM (
+            SELECT
+            	ROW_NUMBER() OVER(ORDER BY SEQ DESC) RN,
+			    a.*
+		    FROM MC_MEMBER_HISTORY a
+		    WHERE MEMBER_ID=#{member_id}
+        ) PT1
+		WHERE RN BETWEEN NVL(#{rows, jdbcType=INTEGER},10) * (NVL(#{cpage, jdbcType=INTEGER},1) - 1) + 1 AND NVL(#{rows, jdbcType=INTEGER},10) * NVL(#{cpage, jdbcType=INTEGER},1)
+	</select>
+	
+	<select id="memberHistoryPagination" parameterType="Map" resultType="mcmap">
+	    SELECT
+	        CEIL(COUNT(1)/NVL(#{rows}, 10)) TOTALPAGE,
+	        COUNT(1) TOTALCOUNT
+        FROM MC_MEMBER_HISTORY a
+        WHERE a.MEMBER_ID=#{member_id}
+	</select>
+	
+	<update id="dormancy_adm_init" parameterType="Map">
+	<![CDATA[
+		UPDATE MC_MEMBER SET 
+			LAST_LOGIN = sysdatetime,
+			DORMANCY_YN = 'N'
+		WHERE MEMBER_ID = #{member_id}
+			AND MEMBER_NM = #{member_nm}
+			AND EMAIL = #{email}
+	]]> 
+	</update>
+	
+	<update id="dormancy_update" parameterType="String">
+	<![CDATA[
+		UPDATE MC_MEMBER SET
+			DORMANCY_YN='Y'
+		WHERE TO_CHAR(LAST_LOGIN, 'YYYY-MM-DD') < #{dt}
+			AND DORMANCY_YN='N' AND DEL_YN='N' AND BLOCK_YN='N'
+	]]>
+	</update>
+	
+	<update id="memberWakeup" parameterType="String">
+	<![CDATA[
+		UPDATE MC_MEMBER SET
+			DORMANCY_YN='N',
+			LAST_LOGIN = sysdatetime
+		WHERE MEMBER_ID=#{member_id}
+	]]>
+	</update>
+</mapper>

@@ -1,0 +1,521 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="Menu">
+	
+	<select id="site_list" parameterType="Map" resultType="mcmap">
+		SELECT 
+			A.CMS_MENU_SEQ, A.TITLE, COALESCE(A.SUB_PATH, '/') AS SUB_PATH
+		FROM
+			MC_CMS_MENU A
+			<!--<if test="session_group_seq == '2'.toString()">
+			JOIN (SELECT CMS_MENU_SEQ FROM MC_CMS_STAFF WHERE MEMBER_ID=#{session_member_id}) B
+			ON A.CMS_MENU_SEQ = B.CMS_MENU_SEQ
+			</if>-->
+		WHERE
+			A.PARENT_MENU_SEQ = 0
+			AND A.DEL_YN = 'N'
+	</select>
+
+	<select id="left_list" parameterType="String" resultType="mcmap">
+		SELECT  
+			sg.CMS_MENU_SEQ, sg.PARENT_MENU_SEQ, sg.TITLE, sg.MENU_ORDER, sg.SITE_ID, sg.MENU_URL, sg.MANAGE_URL, sg.TARGET_URL, sg.BLANK_YN, sg.CHILD_TYPE, sg.TOP_YN, sg.MENU_TYPE, sg.DEL_YN, sg.USE_YN
+			, sg2.MENU_LEVEL,
+			SYS_CONNECT_BY_PATH_MENU(sg.CMS_MENU_SEQ, '>') AS PAGE_NAVI,
+			sys_connect_by_path_menu_order(sg.CMS_MENU_SEQ, '_') AS order_menu_set
+		FROM    (
+		        SELECT  start_with_connect_by_memu() AS PARENT_MENU_SEQ, @level AS MENU_LEVEL
+		        FROM    (
+		                SELECT  @start_with := ifnull(#{site_id}, '1'),
+		                        @id := @start_with,
+		                        @level := 0,
+		                        @rn := 0
+		                ) vars, MC_CMS_MENU
+		        ) sg2
+		JOIN    MC_CMS_MENU sg
+		ON      sg.CMS_MENU_SEQ = sg2.PARENT_MENU_SEQ
+		ORDER BY order_menu_set
+	</select>
+	
+	<select id="list" parameterType="String" resultType="mcmap">
+		SELECT  
+			sg.*, sg2.MENU_LEVEL,
+			SYS_CONNECT_BY_PATH_MENU(sg.CMS_MENU_SEQ, '>') AS PAGE_NAVI,
+			sys_connect_by_path_menu_order(sg.CMS_MENU_SEQ, '_') AS order_menu_set
+		FROM    (
+		        SELECT  start_with_connect_by_memu() AS PARENT_MENU_SEQ, @level AS MENU_LEVEL
+		        FROM    (
+		                SELECT  @start_with := ifnull(#{site_id}, '1'),
+		                        @id := @start_with,
+		                        @level := 0,
+		                        @rn := 0
+		                ) vars, MC_CMS_MENU
+		        WHERE   @id IS NOT NULL
+		        ) sg2
+		JOIN    MC_CMS_MENU sg
+		ON      sg.CMS_MENU_SEQ = sg2.PARENT_MENU_SEQ
+		ORDER BY order_menu_set
+	</select>
+		
+	<select id="page_navi" parameterType="String" resultType="mcmap">
+		SELECT  
+			SUBSTR(SYS_CONNECT_BY_PATH_MENU(sg.CMS_MENU_SEQ, '>'), 2) AS PAGE_NAVI
+		FROM    (
+		        SELECT  start_with_connect_by_memu() AS PARENT_MENU_SEQ, @level AS MENU_LEVEL
+		        FROM    (
+		                SELECT  @start_with := IFNULL(0, '1'),
+		                        @id := @start_with,
+		                        @level := 0,
+		                        @rn := 0
+		                ) vars, MC_CMS_MENU
+		        WHERE   @id IS NOT NULL
+		        ) sg2
+		JOIN    MC_CMS_MENU sg
+		ON      sg.CMS_MENU_SEQ = sg2.PARENT_MENU_SEQ
+		WHERE CMS_MENU_SEQ=#{cms_menu_seq}
+	</select>
+	
+	<select id="view" parameterType="Map" resultType="mcmap">
+		SELECT 
+			A.*,
+			B.BOARD_SEQ,
+			B.BOARD_TYPE,
+			B.BOARD_NM AS B_PROGRAM_NM
+		FROM 
+			MC_CMS_MENU A
+			LEFT OUTER JOIN MC_BOARD B ON A.BOARD_SEQ = B.BOARD_SEQ  
+		WHERE 
+			CMS_MENU_SEQ=#{cms_menu_seq}
+	</select>
+	
+	<update id="write" parameterType="Map" useGeneratedKeys="true" keyColumn="cms_menu_seq" keyProperty="cms_menu_seq">
+		INSERT INTO MC_CMS_MENU(
+			TITLE, PARENT_MENU_SEQ, MENU_ORDER, CONTS, HEAD_HTML,
+		    USE_YN, BLANK_YN, MENU_TYPE, SITE_ID, PROGRAM_NM,
+		    CHILD_TYPE, TEMPLATE_TYPE, MENU_URL, ADD_PARAM, CUD_GROUP_SEQ, R_GROUP_SEQ, MANAGE_URL, INNER_YN, TARGET_URL, TOP_YN, 
+			CCL_TYPE ,NURI_TYPE ,TAG_NAMES,
+		    <if test="menu_type == '2'.toString() and board_seq != ''">
+			BOARD_SEQ,
+			</if>
+		    REG_ID, REG_NM, REG_DT, MOD_ID, MOD_NM, MOD_DT, CMOD_ID, CMOD_NM, CMOD_DT)
+		 VALUES(
+			#{title}, #{parent_menu_seq}, (SELECT IFNULL(MAX(MENU_ORDER),0)+1 FROM MC_CMS_MENU t1 WHERE parent_menu_seq=#{parent_menu_seq}), #{conts}, #{head_html},
+			#{use_yn}, #{blank_yn}, #{menu_type}, #{site_id}, #{program_nm}, 
+			#{child_type}, #{template_type}, #{menu_url}, #{add_param}, #{cud_group_seq}, #{r_group_seq}, #{manage_url}, #{inner_yn}, #{target_url}, #{top_yn}, 
+			#{ccl_type}, #{nuri_type}, #{tag_names},
+			<if test="menu_type == '2'.toString() and board_seq != ''">
+			#{board_seq},
+			</if>
+			#{session_member_id}, #{session_member_nm}, sysdate(), #{session_member_id}, #{session_member_nm}, sysdate(), #{session_member_id}, #{session_member_nm}, sysdate()
+		 )
+	</update>
+	
+	<update id="updateMenuUrl" parameterType="Map">
+		UPDATE MC_CMS_MENU SET
+			MENU_URL = #{menu_url}
+		WHERE CMS_MENU_SEQ=#{cms_menu_seq}
+	</update>
+	
+	<update id="backup" parameterType="Map">
+		INSERT INTO MC_CMS_MENU_BAKUP(
+		    CMS_MENU_SEQ, TITLE, MENU_ORDER, USE_YN, BLANK_YN, MENU_TYPE, TARGET_URL, 
+		    PROGRAM_NM, CUD_GROUP_SEQ, R_GROUP_SEQ, MANAGE_URL, ADD_PARAM, INNER_YN, BOARD_SEQ, SITE_ID, REG_NM, REG_DT, MOD_NM, MOD_DT, 
+		    DEL_NM, DEL_DT, DEL_YN, CHILD_TYPE, HEAD_HTML, TEMPLATE_TYPE, REG_ID, MOD_ID, DEL_ID, PARENT_MENU_SEQ, MENU_URL, TOP_YN, JSON_STAFFS, JSON_STAFF_GROUP, JSON_LIBS
+		)
+		SELECT 
+		    CMS_MENU_SEQ, TITLE, MENU_ORDER, USE_YN, BLANK_YN, MENU_TYPE, TARGET_URL, 
+		    PROGRAM_NM, CUD_GROUP_SEQ, R_GROUP_SEQ, MANAGE_URL, ADD_PARAM, INNER_YN, BOARD_SEQ, SITE_ID, REG_NM, REG_DT, MOD_NM, MOD_DT, 
+		    DEL_NM, DEL_DT, DEL_YN, CHILD_TYPE, HEAD_HTML, TEMPLATE_TYPE, REG_ID, MOD_ID, DEL_ID, PARENT_MENU_SEQ, MENU_URL, TOP_YN, #{json_staffs}, #{json_staff_group}, #{json_libs}
+		FROM MC_CMS_MENU WHERE CMS_MENU_SEQ=#{cms_menu_seq}
+	</update>
+	
+	<update id="backup2" statementType="CALLABLE"  parameterType="Map">
+		<!-- 담당자 지정이 너무 많아 에러발생시 backup2를 backup으로 변경해서 해볼것 -->
+		<!-- exec CP_MC_CMS_MENU_BAKUP( #{json_staffs}, #{json_staff_group}, #{json_libs}, #{cms_menu_seq} ) -->
+		<!-- { 와 call 사이에 스페이스만 허용 tab 은 허용하지 않음 -->
+	    { call CP_MC_CMS_MENU_BAKUP
+	        (
+	            #{json_staffs},
+	            #{json_staff_group},
+	            #{json_libs},
+	            #{cms_menu_seq}
+	        )
+	    }
+	</update>
+	
+	<update id="modify" parameterType="Map">
+		UPDATE MC_CMS_MENU SET
+			TITLE = #{title}
+			,USE_YN = #{use_yn}
+			,CHILD_TYPE = #{child_type}
+			,BLANK_YN = #{blank_yn}
+			,MENU_TYPE = #{menu_type}
+			,HEAD_HTML = #{head_html}
+			,TARGET_URL = #{target_url}
+			,TEMPLATE_TYPE = #{template_type}
+			,PROGRAM_NM = #{program_nm}
+			,MANAGE_URL = #{manage_url}
+			,INNER_YN = #{inner_yn}
+			<if test="menu_type == '2'.toString() and board_seq != ''">
+			,BOARD_SEQ = #{board_seq}
+			</if>
+			<if test="menu_type != '2'.toString()">
+			,BOARD_SEQ = null
+			</if>
+			,MENU_URL = #{menu_url}
+			,ADD_PARAM = #{add_param}
+			,CUD_GROUP_SEQ = #{cud_group_seq}
+			,R_GROUP_SEQ = #{r_group_seq}
+			,SITE_ID = #{site_id}
+			,TOP_YN = #{top_yn}
+			,MOD_ID = #{session_member_id}
+			,MOD_NM = #{session_member_nm}
+			,MOD_DT = sysdate()
+		WHERE CMS_MENU_SEQ=#{cms_menu_seq}
+	</update>
+	
+	<select id="backup_list" parameterType="Map" resultType="mcmap">
+		SELECT A.*
+		FROM
+		(
+		SELECT CAST(@ROWNUM:=@ROWNUM+1 AS SIGNED) AS RN, TB.*
+		FROM(
+			SELECT
+			    *
+			FROM MC_CMS_MENU_BAKUP 
+			WHERE CMS_MENU_SEQ=#{cms_menu_seq}
+			ORDER BY SEQ DESC
+		) AS TB, 
+		(SELECT @ROWNUM:=0) AS R
+		)AS A
+		WHERE CEIL(RN/IFNULL(#{rows},10))=IFNULL(#{cpage},1)
+	</select>
+	
+	<select id="backup_pagination" parameterType="Map" resultType="mcmap">
+	    SELECT
+	        CEIL(COUNT(1)/IFNULL(#{rows}, 10)) TOTALPAGE,
+	        COUNT(1) TOTALCOUNT
+	    FROM MC_CMS_MENU_BAKUP
+	    WHERE CMS_MENU_SEQ=#{cms_menu_seq}
+	</select>
+	
+	<select id="content_backup_list" parameterType="Map" resultType="mcmap">
+		SELECT A.*, (SELECT GROUP_NM FROM MC_GROUP WHERE GROUP_SEQ = (SELECT GROUP_SEQ FROM MC_MEMBER WHERE MEMBER_ID = A.CMOD_ID)) AS GROUP_NM
+		FROM
+		(
+		SELECT CAST(@ROWNUM:=@ROWNUM+1 AS SIGNED) AS RN, TB.*
+		FROM(
+			SELECT
+			    *
+			FROM MC_CMS_CONTENT_BAKUP 
+			WHERE CMS_MENU_SEQ=#{cms_menu_seq}
+			ORDER BY SEQ DESC
+		) AS TB, 
+		(SELECT @ROWNUM:=0) AS R
+		)AS A
+		WHERE CEIL(RN/IFNULL(#{rows},10))=IFNULL(#{cpage},1)
+	</select>
+	
+	<select id="content_backup_pagination" parameterType="Map" resultType="mcmap">
+	    SELECT
+	        CEIL(COUNT(1)/IFNULL(#{rows}, 10)) TOTALPAGE,
+	        COUNT(1) TOTALCOUNT
+	    FROM MC_CMS_CONTENT_BAKUP
+	    WHERE CMS_MENU_SEQ=#{cms_menu_seq}
+	</select>
+	
+	<update id="contentSave" parameterType="Map">
+		UPDATE MC_CMS_MENU SET
+			CONTS = #{conts}
+			,CCL_TYPE = #{ccl_type}
+			,NURI_TYPE = #{nuri_type}
+			,TAG_NAMES = #{tag_names}
+			,TEMP_CONTS = ''
+			,CMOD_ID = #{session_member_id}
+			,CMOD_NM = #{session_member_nm}
+			,CMOD_DT = sysdate()
+		WHERE CMS_MENU_SEQ=#{cms_menu_seq}
+	</update>
+	
+	<update id="temp_save" parameterType="Map">
+		UPDATE MC_CMS_MENU SET
+			TEMP_CONTS = #{conts}
+		WHERE CMS_MENU_SEQ=#{cms_menu_seq}
+	</update>
+	
+	<update id="contentBackup" parameterType="Map">
+		INSERT INTO MC_CMS_CONTENT_BAKUP(
+		    CMS_MENU_SEQ, CONTS, CMOD_ID, CMOD_NM, CMOD_DT
+		)
+		SELECT 
+		    CMS_MENU_SEQ, CONTS, CMOD_ID, CMOD_NM, CMOD_DT
+		FROM MC_CMS_MENU WHERE CMS_MENU_SEQ=#{cms_menu_seq}
+	</update>
+
+	<select id="getChildMenus" parameterType="Map" resultType="mcmap">
+		SELECT
+			B.CMS_MENU_SEQ, B.PARENT_MENU_SEQ
+		FROM
+			(
+				SELECT
+			   		start_with_connect_by_memu() AS PARENT_MENU_SEQ, @level AS MENU_LEVEL
+				FROM
+				 	(SELECT  @start_with := #{cms_menu_seq}, @id := @start_with, @level := 0, @rn := 0) AS VARS,
+				 	MC_CMS_MENU
+			) AS A
+		INNER JOIN
+			MC_CMS_MENU B
+			ON B.CMS_MENU_SEQ = A.PARENT_MENU_SEQ
+		ORDER BY B.PARENT_MENU_SEQ, B.CMS_MENU_SEQ
+	</select>
+	
+	<update id="del" parameterType="Map">
+		UPDATE MC_CMS_MENU SET
+			DEL_YN = 'Y'
+			,DEL_ID = #{session_member_id}
+			,DEL_NM = #{session_member_nm}
+			,DEL_DT = sysdate()
+		WHERE CMS_MENU_SEQ=#{cms_menu_seq}
+	</update>
+	
+	<update id="update_menu_order" parameterType="Map">
+		UPDATE MC_CMS_MENU SET
+			MENU_ORDER = #{menu_order}		
+			, PARENT_MENU_SEQ = #{parent_menu_seq}	
+		WHERE CMS_MENU_SEQ = #{cms_menu_seq}
+	</update>
+	
+	<select id="staff_list" parameterType="Map" resultType="mcmap">
+	    SELECT
+	        CMS_STAFF_SEQ, CMS_MENU_SEQ, GROUP_SEQ, GROUP_NM, MEMBER_NM, MEMBER_ID, REG_DT, REG_ID, REG_NM, ORDER_SEQ
+	    FROM MC_CMS_STAFF
+	    WHERE CMS_MENU_SEQ=#{cms_menu_seq}
+	</select>
+	
+	<select id="menu_staff_list" parameterType="String" resultType="mcmap">
+		SELECT MEMBER_ID, CMS_MENU_SEQ FROM MC_CMS_STAFF WHERE MEMBER_ID=#{member_id}
+	</select>
+	
+	<select id="menu_permission_list" parameterType="String" resultType="mcmap">
+		SELECT MEMBER_ID, CMS_MENU_SEQ FROM MC_CMS_PERMISSION WHERE MEMBER_ID=#{member_id}
+	</select>
+	
+	<select id="staffGroup_list" parameterType="Map" resultType="mcmap">
+	    SELECT
+	        SEQ, CMS_MENU_SEQ, GROUP_SEQ, GROUP_NM, REG_DT, REG_ID, REG_NM, ORDER_SEQ
+	    FROM MC_CMS_STAFF_GROUP
+	    WHERE CMS_MENU_SEQ=#{cms_menu_seq}
+	</select>
+
+	<select id="permission_list" parameterType="Map" resultType="mcmap">
+		SELECT
+			CMS_STAFF_SEQ, CMS_MENU_SEQ, GROUP_SEQ, GROUP_NM, MEMBER_NM, MEMBER_ID, REG_DT, REG_ID, REG_NM, ORDER_SEQ
+		FROM MC_CMS_PERMISSION
+		WHERE CMS_MENU_SEQ=#{cms_menu_seq}
+	</select>
+	
+	<update id="insertStaff" parameterType="Map">
+		INSERT INTO MC_CMS_STAFF(
+			CMS_MENU_SEQ, GROUP_SEQ, GROUP_NM, MEMBER_NM, MEMBER_ID, ORDER_SEQ, 
+			REG_ID, REG_NM, REG_DT
+		)VALUES(
+			#{cms_menu_seq}, #{group_seq}, (SELECT GROUP_NM FROM MC_GROUP WHERE GROUP_SEQ=#{group_seq}), #{member_nm}, #{member_id}, #{order_seq}, 
+			#{session_member_id}, #{session_member_nm}, sysdate()
+		)
+	</update>
+	
+	<update id="insertPermission" parameterType="Map">
+		INSERT INTO MC_CMS_PERMISSION(
+			CMS_MENU_SEQ, GROUP_SEQ, GROUP_NM, MEMBER_NM, MEMBER_ID, ORDER_SEQ, 
+			REG_ID, REG_NM, REG_DT
+		)VALUES(
+			#{cms_menu_seq}, #{group_seq}, (SELECT GROUP_NM FROM MC_GROUP WHERE GROUP_SEQ=#{group_seq}), #{member_nm}, #{member_id}, #{order_seq}, 
+			#{session_member_id}, #{session_member_nm}, sysdate()
+		)
+	</update>
+	
+	<delete id="staff_del_all" parameterType="Map">
+		DELETE FROM MC_CMS_STAFF WHERE CMS_MENU_SEQ = #{cms_menu_seq}
+	</delete>
+	
+	<delete id="permission_del_all" parameterType="Map">
+		DELETE FROM MC_CMS_PERMISSION WHERE CMS_MENU_SEQ = #{cms_menu_seq}
+	</delete>
+	
+	<delete id="staff_del" parameterType="Map">
+		DELETE FROM MC_CMS_STAFF WHERE CMS_MENU_SEQ = #{cms_menu_seq} AND MEMBER_ID=#{member_id}
+	</delete>
+	
+	<delete id="staff_del_user" parameterType="Map">
+		DELETE FROM MC_CMS_STAFF WHERE MEMBER_ID=#{member_id}
+	</delete>
+	
+	<delete id="permission_del" parameterType="Map">
+		DELETE FROM MC_CMS_PERMISSION WHERE CMS_MENU_SEQ = #{cms_menu_seq} AND MEMBER_ID=#{member_id}
+	</delete>
+	
+	<delete id="permission_del_user" parameterType="Map">
+		DELETE FROM MC_CMS_PERMISSION WHERE MEMBER_ID=#{member_id}
+	</delete>
+	
+	<update id="insertStaffGroup" parameterType="Map">
+		INSERT INTO MC_CMS_STAFF_GROUP(
+			CMS_MENU_SEQ, GROUP_SEQ, GROUP_NM, ORDER_SEQ, 
+			REG_ID, REG_NM, REG_DT
+		)VALUES(
+			#{cms_menu_seq}, #{group_seq}, #{group_nm}, #{order_seq}, 
+			#{session_member_id}, #{session_member_nm}, sysdate()
+		)
+	</update>
+	
+	<delete id="staffGroup_del" parameterType="Map">
+		DELETE FROM MC_CMS_STAFF_GROUP WHERE CMS_MENU_SEQ = #{cms_menu_seq}
+	</delete>
+    
+	<select id="general" parameterType="String" resultType="mcmap">
+		SELECT 
+			CONTS, TITLE, CCL_TYPE, NURI_TYPE, TAG_NAMES
+		FROM 
+			MC_CMS_MENU A
+		WHERE 
+			CMS_MENU_SEQ=#{cms_menu_seq}
+	</select>
+    
+	<select id="tabmenu" parameterType="Map" resultType="mcmap">
+		SELECT
+		    CMS_MENU_SEQ, TITLE, BLANK_YN, CONTS, PARENT_MENU_SEQ, MENU_URL, DEL_YN, USE_YN
+		FROM MC_CMS_MENU WHERE CMS_MENU_SEQ = (select PARENT_MENU_SEQ from MC_CMS_MENU where CMS_MENU_SEQ = #{cms_menu_seq})
+		union all
+		SELECT * FROM
+		(
+		    SELECT
+		        CMS_MENU_SEQ, TITLE, BLANK_YN, CONTS, PARENT_MENU_SEQ, MENU_URL, DEL_YN, USE_YN
+		    FROM MC_CMS_MENU C
+		    WHERE C.PARENT_MENU_SEQ = (
+		        SELECT 
+		            CMS_MENU_SEQ
+		        FROM MC_CMS_MENU a
+		        WHERE DEL_YN='N'
+		            AND CMS_MENU_SEQ = (select PARENT_MENU_SEQ from MC_CMS_MENU where CMS_MENU_SEQ = #{cms_menu_seq})
+		            AND CHILD_TYPE='2'
+		        )
+		    AND C.DEL_YN='N'
+		    ORDER BY MENU_ORDER
+		)t1
+	</select>
+    
+	<select id="page_manager" parameterType="Map" resultType="mcmap">
+		SELECT 
+		    a.CMS_STAFF_SEQ, a.CMS_MENU_SEQ, a.GROUP_SEQ, a.GROUP_NM, a.MEMBER_NM, a.MEMBER_ID, a.ORDER_SEQ,
+            b.TEL
+		FROM MC_CMS_STAFF a LEFT OUTER JOIN MC_MEMBER b
+        ON a.MEMBER_ID = b.MEMBER_ID
+		WHERE a.CMS_MENU_SEQ = #{cms_menu_seq}
+		ORDER BY ORDER_SEQ ASC
+	</select>
+    
+	<select id="getSeq" parameterType="String" resultType="String">
+		SELECT 
+		    CMS_MENU_SEQ
+		FROM MC_CMS_MENU
+		WHERE MENU_URL = #{menu_url}
+	</select>
+
+	<select id="my_manage_page" parameterType="Map" resultType="String">
+        SELECT
+            CMS_MENU_SEQ
+        FROM MC_CMS_STAFF_GROUP WHERE GROUP_SEQ = (SELECT GROUP_SEQ FROM MC_MEMBER WHERE MEMBER_ID=#{session_member_id})
+	</select>
+    
+	<select id="my_permission_page" parameterType="Map" resultType="String">
+		SELECT
+		    CMS_MENU_SEQ
+		FROM MC_CMS_PERMISSION WHERE MEMBER_ID = #{session_member_id}
+	</select>
+
+	<select id="get_my_permission_page" parameterType="Map" resultType="String">
+		SELECT
+			CMS_MENU_SEQ
+		FROM MC_CMS_PERMISSION WHERE MEMBER_ID = #{session_member_id} AND CMS_MENU_SEQ = #{cms_menu_seq}
+	</select>
+	
+	<delete id="delete_favorites" parameterType="Map">
+		DELETE FROM MC_FAVORITES WHERE MEMBER_ID=#{session_member_id}
+	</delete>
+	<update id="update_favorites" parameterType="Map">
+		INSERT INTO MC_FAVORITES(MENU_SEQ, TITLE, URL, MEMBER_ID, ORDER_SEQ)VALUES(
+			#{menu_seq}, #{title}, #{url}, #{member_id}, #{order_seq}
+		)
+	</update>
+	 
+	<select id="get_favorites" parameterType="Map" resultType="mcmap">
+		SELECT * FROM MC_FAVORITES WHERE MEMBER_ID=#{session_member_id} ORDER BY ORDER_SEQ ASC
+	</select>
+	
+	<update id="update_menu_toggle" parameterType="Map">
+		<selectKey keyProperty="cnt" resultType="int" order="BEFORE">
+		SELECT COUNT(1) as cnt FROM MC_CMS_MENU_TOGGLE WHERE MEMBER_ID=#{session_member_id} AND TITLE=#{title}
+		</selectKey>
+		<choose>
+			<when test="cnt>0">
+			UPDATE MC_CMS_MENU_TOGGLE SET
+				INFO = #{info}
+			WHERE MEMBER_ID=#{session_member_id} AND TITLE=#{title}
+			</when>
+			<otherwise>
+			INSERT INTO MC_CMS_MENU_TOGGLE(MEMBER_ID, TITLE, INFO)VALUES(
+				#{session_member_id}, #{title}, #{info}
+			)
+			</otherwise>
+		</choose>
+	</update>
+	 
+	<select id="get_menu_toggle" parameterType="Map" resultType="mcmap">
+		SELECT INFO FROM MC_CMS_MENU_TOGGLE WHERE MEMBER_ID=#{session_member_id} AND TITLE=#{title}
+	</select>
+	
+	<select id="my_authority" parameterType="Map" resultType="mcmap">
+		SELECT
+		    ADD_YN, MOD_YN, VIEW_YN
+		FROM MC_CMS_MANAGE_AUTH_DETAIL
+		WHERE MEMBER_ID=#{member_id} AND CMS_MENU_SEQ = #{menu_seq}
+	</select>
+	
+	<select id="mygroup_authority" parameterType="Map" resultType="mcmap">
+		SELECT
+		    ADD_YN, MOD_YN, VIEW_YN
+		FROM MC_MANAGE_AUTH_DETAIL
+		    WHERE CMS_MENU_SEQ = #{menu_seq}
+		<choose>
+			<when test="(group_seq=='0'.toString() or group_seq=='-1'.toString())">
+			AND PARENT_SEQ = #{group_seq}
+			</when>
+			<otherwise>
+			AND PARENT_SEQ = (
+		                SELECT
+		                    MANAGE_SEQ
+		                FROM MC_GROUP
+		                WHERE GROUP_SEQ=#{group_seq}
+		            )
+			</otherwise>
+		</choose>
+	</select>
+	
+	<select id="lib_list" parameterType="Map" resultType="mcmap">
+		SELECT
+		    *
+		FROM MC_CMS_MENU_LIBS
+		WHERE CMS_MENU_SEQ = #{cms_menu_seq}
+		ORDER BY ORDER_SEQ ASC
+	</select>
+	
+	<delete id="delete_lib_all" parameterType="Map">
+		DELETE FROM MC_CMS_MENU_LIBS WHERE CMS_MENU_SEQ=#{cms_menu_seq}
+	</delete>
+	<update id="insert_lib" parameterType="Map">
+		INSERT INTO MC_CMS_MENU_LIBS(CMS_MENU_SEQ, TP, EXTENSION, ORDER_SEQ, FULL_PATH, ORG_FILE_NAME, SYS_FILE_NAME)
+		VALUES(
+			#{cms_menu_seq}, #{tp}, #{extension}, #{order_seq}, #{full_path}, #{org_file_name}, #{sys_file_name}
+		)
+	</update>
+	 
+</mapper>

@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="Staff">
+	
+	<select id="group_list" parameterType="Map" resultType="mcmap">
+		<![CDATA[
+		SELECT  
+			sg.GROUP_SEQ, sg.GROUP_NM, sg.PARENT_SEQ, sg.USE_YN, sg.REG_DT, sg.ORDER_SEQ, sg2.LEVEL, sg.DEL_YN,
+			sys_connect_by_path_group_order(sg.GROUP_SEQ, '_') AS order_set
+		FROM    (
+		        SELECT  start_with_connect_by_group() AS PARENT_SEQ, @level AS LEVEL, @rn:=@rn+1 AS rn
+		        FROM    (
+		                SELECT  @start_with := #{start_group_seq},
+		                        @id := @start_with,
+		                        @level := 0,
+                            	@rn := 0
+		                ) vars, MC_GROUP
+		        WHERE   @id IS NOT NULL
+		        ) sg2
+		JOIN    MC_GROUP sg
+		ON      sg.GROUP_SEQ = sg2.PARENT_SEQ
+		ORDER BY order_set ASC
+		]]> 
+	</select>
+	
+	<select id="list" parameterType="Map" resultType="mcmap">
+        SELECT
+            A.GROUP_SEQ, A.GROUP_NM,
+            B.MEMBER_ID, B.MEMBER_NM, B.EMAIL, B.TEL, B.CELL, B.LAST_LOGIN, B.ORDER_SEQ,
+            B.POSITIONS, B.RESPONSIBILITIES
+        FROM (
+			SELECT GROUP_SEQ, GROUP_NM, '000' AS order_set FROM MC_GROUP WHERE group_seq=#{group_seq}
+			UNION ALL
+			SELECT  
+				sg.GROUP_SEQ, sg.GROUP_NM, 
+				sys_connect_by_path_group_order(sg.GROUP_SEQ, '_') AS order_set
+			FROM    (
+			        SELECT  start_with_connect_by_group() AS PARENT_SEQ, @level AS LEVEL, @rn:=@rn+1 AS rn
+			        FROM    (
+			                SELECT  @start_with := #{group_seq},
+			                        @id := @start_with,
+			                        @level := 1,
+									@rn := 0
+			                ) vars, MC_GROUP
+			        WHERE   @id IS NOT NULL
+			        ) sg2
+			JOIN    MC_GROUP sg
+			ON      sg.GROUP_SEQ = sg2.PARENT_SEQ
+			WHERE DEL_YN='N'
+			<if test="(has_child=='N'.toString())">
+				AND GROUP_SEQ=#{group_seq}
+			</if>
+			ORDER BY order_set ASC
+		)A LEFT OUTER JOIN MC_MEMBER B
+		ON A.GROUP_SEQ=B.GROUP_SEQ
+		ORDER BY A.order_set, B.ORDER_SEQ
+	</select>
+	
+</mapper>

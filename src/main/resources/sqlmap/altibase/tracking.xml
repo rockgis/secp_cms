@@ -1,0 +1,161 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="tracking">
+	<select id="loginList" parameterType="Map" resultType="mcmap">
+		SELECT PT1.* FROM	(
+			SELECT 
+				ROWNUM AS RN,
+				TB.* 
+			FROM(
+				SELECT
+					T1.SEQ,
+					T1.MEMBER_ID, 
+					T1.MEMBER_NAME,
+					T1.LOGIN_IP,
+					T1.LOGIN_DATE,
+					MANAGEMENT_SITE_TITLE(T1.MEMBER_ID) AS TITLE
+				FROM 
+					MC_STAFF_LOGIN_TRACKING T1 
+				WHERE
+				<![CDATA[
+					T1.LOGIN_DATE >= #{start_date} AND T1.LOGIN_DATE <= #{end_date}
+				]]> 
+				<if test="!(member_name == null or member_name == '')">
+					AND T1.MEMBER_NAME LIKE '%'||#{member_name}||'%'
+				</if>
+				ORDER BY MEMBER_NAME ASC
+			) TB
+		) PT1
+		WHERE RN BETWEEN NVL(#{rows, jdbcType=INTEGER},10) * (NVL(#{cpage, jdbcType=INTEGER},1) - 1) + 1 AND NVL(#{rows, jdbcType=INTEGER},10) * NVL(#{cpage, jdbcType=INTEGER},1)
+	</select>
+	
+	<select id="loginPagination" parameterType="Map" resultType="mcmap">
+		SELECT PT1.* FROM	(
+			SELECT 
+				CEIL(COUNT(TB.MEMBER_ID) / NVL(#{rows, jdbcType=INTEGER} ,10)) TOTALPAGE,
+				COUNT(TB.MEMBER_ID) TOTALCOUNT
+			FROM(
+				SELECT
+					T1.MEMBER_ID, 
+					T1.MEMBER_NAME
+				FROM 
+					MC_STAFF_LOGIN_TRACKING T1 
+				WHERE
+				<![CDATA[
+					T1.LOGIN_DATE >= #{start_date} AND T1.LOGIN_DATE <= #{end_date}
+				]]> 
+				<if test="!(member_name == null or member_name == '')">
+					AND T1.MEMBER_NAME LIKE '%'||#{member_name}||'%'
+				</if>
+				ORDER BY MEMBER_NAME ASC
+			) TB
+		) PT1
+	</select>
+	
+	<select id="viewList" parameterType="Map" resultType="mcmap">
+		SELECT PT1.* FROM	(
+			SELECT 
+				ROWNUM AS RN,
+				TB.* 
+			FROM (
+				SELECT 
+					T1.*,
+					TO_CHAR(T1.LOCATION_TIME,'YYYY-MM-DD HH24:MI:SS') AS LTIME
+				FROM MC_STAFF_LOCATION_TRACKING T1
+				WHERE T1.PARENT_SEQ IN (
+					SELECT SEQ FROM MC_STAFF_LOGIN_TRACKING WHERE <![CDATA[LOGIN_DATE >= #{start_date} AND LOGIN_DATE <= #{end_date}]]>
+				)
+				AND T1.PARENT_SEQ = #{parent_seq}
+				ORDER BY T1.SEQ DESC
+			) TB
+		) PT1
+		WHERE RN BETWEEN NVL(#{rows, jdbcType=INTEGER},10) * (NVL(#{cpage, jdbcType=INTEGER},1) - 1) + 1 AND NVL(#{rows, jdbcType=INTEGER},10) * NVL(#{cpage, jdbcType=INTEGER},1)
+	</select>
+	
+	<select id="viewPagination" parameterType="Map" resultType="mcmap">
+		SELECT 
+		CEIL(COUNT(SEQ) / NVL(#{rows, jdbcType=INTEGER} ,10)) TOTALPAGE,
+		COUNT(SEQ) TOTALCOUNT
+		FROM MC_STAFF_LOCATION_TRACKING
+		WHERE PARENT_SEQ IN (
+			SELECT SEQ FROM MC_STAFF_LOGIN_TRACKING WHERE <![CDATA[LOGIN_DATE >= #{start_date} AND LOGIN_DATE <= #{end_date}]]>
+		)
+		AND PARENT_SEQ = #{parent_seq}
+	</select>
+	
+		
+	<select id="getLogin" parameterType="Map" resultType="mcmap">
+		SELECT 
+			SEQ
+		FROM 
+			MC_STAFF_LOGIN_TRACKING
+		WHERE
+			MEMBER_ID = #{member_id}
+		AND
+			LOGIN_DATE = TO_DATE(#{login_date}, 'YYYY-MM-DD')
+		AND
+			LOGIN_IP = #{login_ip}
+	</select>
+	
+	<insert id="setLogin" parameterType="Map">
+		INSERT INTO MC_STAFF_LOGIN_TRACKING (
+			SEQ,
+			MEMBER_ID,
+			MEMBER_NAME,
+			LOGIN_DATE,
+			LOGIN_IP
+		) VALUES(
+			SEQ_MC_STAFF_LOGIN_TRACKING.NEXTVAL,
+			#{member_id},
+			#{member_name},
+			TO_DATE(#{login_date}, 'YYYY-MM-DD'),
+			#{login_ip}
+		)
+	</insert>	
+	
+	<insert id="setLocation" parameterType="Map">
+		INSERT INTO MC_STAFF_LOCATION_TRACKING (
+			SEQ,
+			PARENT_SEQ,
+			LOCATION_TIME,
+			TITLE,
+			JOB,
+			URL,
+			PARAMS
+		) VALUES(
+			SEQ_MC_STAFF_LOCATION_TRACKING.NEXTVAL,
+			#{parent_seq},
+			SYSDATE,
+			#{title},
+			#{job},
+			#{url},
+			#{params}
+		)
+	</insert>
+	
+	<select id="viewAuth" parameterType="Map" resultType="mcmap">
+		SELECT 
+            T1.PAGE_NAVI
+        FROM (
+            SELECT 
+                A.CMS_MENU_SEQ, SUBSTR(SYS_CONNECT_BY_PATH(A.TITLE, '>'),2) as PAGE_NAVI
+            FROM MC_CMS_MENU A
+            START WITH A.PARENT_MENU_SEQ = nvl(0, '1') AND A.DEL_YN = 'N'
+            CONNECT BY PRIOR A.CMS_MENU_SEQ = A.PARENT_MENU_SEQ
+            ORDER SIBLINGS BY A.MENU_ORDER
+        ) T1
+        JOIN MC_CMS_STAFF B ON T1.CMS_MENU_SEQ = B.CMS_MENU_SEQ AND B.MEMBER_ID = #{member_id}
+	</select>	
+	
+	<delete id="removeSchedule1">
+	<![CDATA[
+		DELETE FROM MC_STAFF_LOCATION_TRACKING WHERE location_time <  ADD_MONTHS(sysdate,-6)
+	]]>
+	</delete>
+	
+	<delete id="removeSchedule2">
+	<![CDATA[
+		DELETE FROM MC_STAFF_LOGIN_TRACKING WHERE login_date <  ADD_MONTHS(sysdate,-6)
+	]]>
+	</delete>
+</mapper>

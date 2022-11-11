@@ -1,0 +1,121 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="attach">
+	<insert id="insert" parameterType="Map">
+			<selectKey keyProperty="null_order_seq" resultType="int" order="BEFORE">
+				SELECT COUNT(1) + 1 FROM MC_ATTACH WHERE TABLE_NM=#{table_nm} AND TABLE_SEQ=#{table_seq}
+			</selectKey>		
+		INSERT INTO MC_ATTACH(
+			UUID,
+			ATTACH_NM,
+			REG_ID,
+			REG_NM,
+			REG_DT,
+			YYYY,
+			MM,
+			TABLE_NM,
+			TABLE_SEQ,
+			ORDER_SEQ
+		)VALUES(
+			#{uuid},
+			#{attach_nm},
+			#{session_member_id},
+			#{session_member_nm},
+			CURRENT_TIMESTAMP,
+			#{yyyy},
+			#{mm},
+			#{table_nm},
+			#{table_seq},
+			IFNULL(#{order_seq}, #{null_order_seq})
+		)
+	</insert>
+	
+	<insert id="insert_temp" parameterType="Map">
+			<selectKey keyProperty="null_order_seq" resultType="int" order="BEFORE">
+				SELECT COUNT(1) + 1 FROM MC_ATTACH WHERE TABLE_NM=#{table_nm} AND TABLE_SEQ=#{table_seq}
+			</selectKey>			
+		INSERT INTO MC_ATTACH(
+			UUID,
+			ATTACH_NM,
+			REG_ID,
+			REG_NM,
+			REG_DT,
+			YYYY,
+			MM,
+			TABLE_NM,
+			ORDER_SEQ,
+			DEL_YN
+		)VALUES(
+			#{uuid},
+			#{attach_nm},
+			#{session_member_id},
+			#{session_member_nm},
+			CURRENT_TIMESTAMP,
+			#{yyyy},
+			#{mm},
+			#{table_nm},
+			IFNULL(#{order_seq}, #{null_order_seq}),
+			'Y'			
+		)
+	</insert>
+	
+	<update id="update_temp" parameterType="Map">
+		UPDATE MC_ATTACH SET 
+			TABLE_SEQ=#{table_seq}
+			,REG_DT=sysdate()
+			,DEL_YN='N'
+		WHERE UUID = #{uuid}
+	</update>
+	
+	<select id="article" parameterType="Map" resultType="mcmap">
+		SELECT
+		  UUID,
+		  ATTACH_NM,
+		  YYYY,
+		  MM
+		FROM
+		  MC_ATTACH
+		WHERE UUID=#{uuid}
+		AND DEL_YN='N'
+	</select>
+	
+	<select id="list" parameterType="Map" resultType="mcmap">
+		SELECT ATTACH_NM, UUID, YYYY, MM, ORDER_SEQ, VIEW_CNT
+		FROM MC_ATTACH
+		WHERE TABLE_NM=#{table_nm} AND TABLE_SEQ=#{table_seq}
+		ORDER BY ORDER_SEQ ASC
+	</select>
+	
+	<delete id="delete" parameterType="Map">
+		DELETE FROM MC_ATTACH WHERE UUID=#{uuid}
+	</delete>
+	
+	<delete id="delete_all" parameterType="Map">
+		DELETE FROM MC_ATTACH WHERE TABLE_NM=#{table_nm} AND TABLE_SEQ=#{table_seq}
+	</delete>
+	
+	<delete id="delete_all_list" parameterType="Map">
+		DELETE FROM MC_ATTACH WHERE TABLE_NM=#{table_nm} AND TABLE_SEQ IN 
+ 		<foreach collection="seq_list" separator="," index="index" open="(" close=")" item="item" >
+ 		 	#{item}
+ 		</foreach> 
+	</delete>
+	
+	<select id="pre_article" parameterType="Map" resultType="mcmap">
+		SELECT
+		  ATTACH_NM,
+		  YYYY
+		FROM
+		  MC_ATTACH
+		WHERE UUID like '%-0000000000000000000000000'||#{uuid}
+		AND DEL_YN='N'
+	</select>
+	
+	<update id="viewcount" parameterType="Map">
+		UPDATE MC_ATTACH SET
+			VIEW_CNT = VIEW_CNT+1 
+		WHERE 
+			UUID = #{uuid}
+	</update>
+    
+</mapper>

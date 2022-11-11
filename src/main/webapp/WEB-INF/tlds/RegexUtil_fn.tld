@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+
+<taglib xmlns="http://java.sun.com/xml/ns/j2ee" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://java.sun.com/xml/ns/j2ee http://java.sun.com/xml/ns/j2ee/web-jsptaglibrary_2_0.xsd"
+	version="2.0">
+
+	<description>JSTL 1.1 user functions library</description>
+	<display-name>JSTL user functions</display-name>
+	<tlib-version>1.1</tlib-version>
+	<short-name>rgx</short-name>
+
+	<function>
+		<description>addHilight</description>
+		<name>addHilight</name>
+		<function-class>com.mc.common.util.RegexUtil</function-class>
+		<function-signature>java.lang.String addHilight(java.lang.String, java.lang.String)</function-signature>
+		<example>
+     		${rgx:addHilight('야호', '야') }
+    	</example>
+	</function>
+	
+	<function>
+		<description>addHilightList</description>
+		<name>addHilightList</name>
+		<function-class>com.mc.common.util.RegexUtil</function-class>
+		<function-signature>java.lang.String addHilight(java.lang.String, java.util.List)</function-signature>
+		<example>
+     		${rgx:addHilightList('야호', list) }
+    	</example>
+	</function>
+
+</taglib>

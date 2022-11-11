@@ -1,0 +1,183 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="Code">
+	
+	<sql id="listWhere">
+		WHERE a.DEL_YN='N'
+		<if test="!(keyword == null or keyword == '')" >
+			<choose>
+				<when test="condition == 'code_group_seq'.toString()">AND CODE_GROUP_SEQ like '%'||#{keyword}||'%'</when>
+				<when test="condition == 'group_nm'.toString()">AND GROUP_NM like '%'||#{keyword}||'%'</when>
+			</choose>
+      	</if>
+	</sql>
+	
+	<select id="list" parameterType="Map" resultType="mcmap">
+		SELECT PT1.* FROM (
+			SELECT
+                rownum RN,
+                a.*,
+                (SELECT COUNT(*) FROM MC_COMMON_CODE T2 WHERE T2.CODE_GROUP_SEQ = a.CODE_GROUP_SEQ AND T2.DEL_YN='N') AS CODE_CNT
+            FROM (SELECT * FROM MC_COMMON_CODE_GROUP ORDER BY CODE_GROUP_SEQ DESC) a
+            <include refid="listWhere"/>
+		) PT1
+		WHERE CEIL(RN/NVL(#{rows},10))=NVL(#{cpage},1)
+	</select>
+	
+	<select id="pagination" parameterType="Map" resultType="mcmap">
+	    SELECT
+	        CEIL(COUNT(1)/NVL(#{rows}, 10)) TOTALPAGE,
+	        COUNT(1) TOTALCOUNT
+        FROM (SELECT * FROM MC_COMMON_CODE_GROUP ORDER BY CODE_GROUP_SEQ DESC) a
+		<include refid="listWhere"/>
+	</select>
+	
+	<select id="codeList" parameterType="Map" resultType="mcmap">
+		SELECT
+		  CODE_SEQ,
+		  CODE_GROUP_SEQ,
+		  CODE,
+		  CODE_NM,
+		  VAL1,
+		  VAL2,
+		  ETC,
+		  USE_YN
+		FROM
+		  MC_COMMON_CODE 
+		WHERE DEL_YN='N'
+		AND CODE_GROUP_SEQ=#{code_group_seq}
+		<if test="use_yn != null">
+		AND USE_YN=#{use_yn}
+		</if>
+		<if test="etc != null">
+		AND etc=#{etc}
+		</if>
+		ORDER BY ORDER_SEQ ASC
+	</select>
+	
+	<select id="codeListVar1" parameterType="Map" resultType="mcmap">
+		SELECT
+		  CODE_SEQ,
+		  CODE_GROUP_SEQ,
+		  CODE,
+		  CODE_NM,
+		  VAL1,
+		  VAL2,
+		  ETC,
+		  USE_YN
+		FROM
+		  MC_COMMON_CODE 
+		WHERE DEL_YN='N'
+		AND VAL1=#{code_group_seq}
+		<if test="use_yn != ''">
+		AND USE_YN=#{use_yn}
+		</if>
+		ORDER BY ORDER_SEQ ASC
+	</select>	
+	
+	<select id="codeListForVal1" parameterType="Map" resultType="mcmap">
+		SELECT
+		  CODE_SEQ,
+		  CODE_GROUP_SEQ,
+		  CODE,
+		  CODE_NM,
+		  VAL1,
+		  VAL2,
+		  ETC,
+		  USE_YN
+		FROM
+		  MC_COMMON_CODE 
+		WHERE DEL_YN='N'
+		AND VAL1=#{code}
+		<if test="use_yn != ''">
+		AND USE_YN=#{use_yn}
+		</if>
+		ORDER BY ORDER_SEQ ASC
+	</select>
+
+	<update id="updateCodeOrderSeq" parameterType="Map">
+		update MC_COMMON_CODE set ORDER_SEQ=#{order_seq}, MOD_DT=sysdate, MOD_ID=#{session_member_id}, MOD_NM=#{session_member_nm}
+		WHERE CODE_SEQ=#{code_seq}
+	</update>
+	
+	<update id="group_modify" parameterType="Map">
+		update MC_COMMON_CODE_GROUP set GROUP_NM=#{group_nm}, CONTS=#{conts}, MOD_DT=sysdate, MOD_ID=#{session_member_id}, MOD_NM=#{session_member_nm}
+		WHERE CODE_GROUP_SEQ=#{code_group_seq}
+	</update>
+	
+	<insert id="group_write" parameterType="Map">
+		insert into MC_COMMON_CODE_GROUP(
+			CODE_GROUP_SEQ,
+			GROUP_NM,
+			CONTS,
+			REG_ID,
+			REG_NM
+		)values(
+			SEQ_MC_COMMON_CODE_GROUP.nextval,
+			#{group_nm},
+			#{conts},
+			#{session_member_id, jdbcType=VARCHAR},
+			#{session_member_nm, jdbcType=VARCHAR}
+		)
+	</insert>
+	
+	<insert id="code_write" parameterType="Map">
+		INSERT
+		INTO
+		  MC_COMMON_CODE
+		  (
+		    CODE_SEQ,
+		    CODE_GROUP_SEQ,
+		    CODE,
+		    CODE_NM,
+		    VAL1,
+		    VAL2,
+		    ORDER_SEQ,
+		    ETC,
+		    USE_YN,
+		    REG_ID,
+		    REG_NM
+		  )
+		  VALUES
+		  (
+		    SEQ_MC_COMMON_CODE.nextval,
+		    #{code_group_seq},
+		    #{code},
+		    #{code_nm},
+		    #{val1},
+		    #{val2},
+		   	(select nvl(max(ORDER_SEQ), 0)+1 from MC_COMMON_CODE where code_group_seq=#{code_group_seq}),
+		    #{etc},
+		    #{use_yn},
+		    #{session_member_id},
+			#{session_member_nm}
+		  )
+	</insert>
+	
+	<update id="code_modify" parameterType="Map">
+		update
+		  MC_COMMON_CODE
+		  set 
+		    CODE_GROUP_SEQ=#{code_group_seq},
+		    CODE=#{code},
+		    CODE_NM=#{code_nm},
+		    VAL1=#{val1},
+		    VAL2=#{val2},
+		    ETC=#{etc},
+		    USE_YN=#{use_yn},
+		    MOD_ID=#{session_member_id},
+		    MOD_NM=#{session_member_nm}
+		  where CODE_SEQ=#{code_seq}
+	</update>
+	
+	<delete id="group_del" parameterType="Map">
+		update MC_COMMON_CODE_GROUP set DEL_YN='Y', DEL_DT=sysdate, DEL_ID=#{session_member_id}, DEL_NM=#{session_member_nm}
+		WHERE CODE_GROUP_SEQ=#{code_group_seq}
+	</delete>
+	
+	<delete id="code_del" parameterType="Map">
+		update MC_COMMON_CODE set DEL_YN='Y', DEL_DT=sysdate, DEL_ID=#{session_member_id}, DEL_NM=#{session_member_nm}
+		WHERE CODE_SEQ=#{code_seq}
+	</delete>
+    
+</mapper>

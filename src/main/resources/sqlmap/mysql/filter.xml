@@ -1,0 +1,526 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="Filter">
+	
+	<select id="list" parameterType="Map" resultType="mcmap" >
+		SELECT A.*
+			FROM
+			(
+			SELECT CAST(@ROWNUM:=@ROWNUM+1 AS SIGNED) AS RN, TB.*
+			FROM(
+				SELECT
+					T1.*, T2.FILTER_YN, T2.JUMIN_YN, T2.BUSINO_YN, T2.BUBINO_YN, T2.EMAIL_YN, T2.TEL_YN, T2.CELL_YN, T2.CARD_YN
+				FROM (
+					SELECT  
+						sg.CMS_MENU_SEQ, sg.TITLE, sg.MENU_TYPE, USE_YN, DEL_YN,
+						SUBSTR(SYS_CONNECT_BY_PATH_MENU(sg.CMS_MENU_SEQ, '>'), 2) AS PAGE_NAVI,
+						sys_connect_by_path_menu_order(sg.CMS_MENU_SEQ, '_') AS order_menu_set
+					FROM    (
+						SELECT  start_with_connect_by_memu() AS PARENT_MENU_SEQ, @level AS MENU_LEVEL
+						FROM    (
+							SELECT  @start_with := #{site_id},
+								@id := @start_with,
+								@level := 0,
+								@rn := 0
+							) vars, MC_CMS_MENU
+						WHERE   @id IS NOT NULL
+						) sg2
+					JOIN    MC_CMS_MENU sg
+					ON      sg.CMS_MENU_SEQ = sg2.PARENT_MENU_SEQ
+					ORDER BY order_menu_set
+				)T1
+				LEFT OUTER JOIN MC_CMS_MENU_FILTER T2
+				ON T1.CMS_MENU_SEQ = T2.CMS_MENU_SEQ
+				WHERE T1.DEL_YN='N' AND T1.USE_YN='Y'
+				<choose> 
+		        	<when test="menu_type == '1'.toString()">AND T1.MENU_TYPE IN ('2', '3')</when>
+		        	<otherwise>AND T1.MENU_TYPE = #{menu_type}</otherwise>
+		        </choose>
+				<if test="!(filter_yn == null or filter_yn == '')" >
+					AND T2.FILTER_YN=#{filter_yn}
+				</if>
+				<if test="!(keyword == null or keyword == '')" >
+					AND PAGE_NAVI like CONCAT('%',#{keyword},'%')
+				</if>
+			) AS TB, 
+			(SELECT @ROWNUM:=0) AS R
+		)AS A
+		WHERE CEIL(RN/IFNULL(#{rows},10))=IFNULL(#{cpage},1)
+	</select>
+	
+	<select id="pagination" parameterType="Map" resultType="mcmap">
+	    SELECT
+	        CEIL(COUNT(1)/IFNULL(#{rows}, 10)) TOTALPAGE,
+	        COUNT(1) TOTALCOUNT
+	    FROM (
+			SELECT  
+				CMS_MENU_SEQ, USE_YN, DEL_YN, MENU_TYPE,
+				SUBSTR(SYS_CONNECT_BY_PATH_MENU(sg.CMS_MENU_SEQ, '>'), 2) AS PAGE_NAVI,
+				sys_connect_by_path_menu_order(sg.CMS_MENU_SEQ, '_') AS order_menu_set
+			FROM    (
+				SELECT  start_with_connect_by_memu() AS PARENT_MENU_SEQ, @level AS MENU_LEVEL
+				FROM    (
+					SELECT  @start_with := #{site_id},
+						@id := @start_with,
+						@level := 0,
+						@rn := 0
+					) vars, MC_CMS_MENU
+				WHERE   @id IS NOT NULL
+				) sg2
+			JOIN    MC_CMS_MENU sg
+			ON      sg.CMS_MENU_SEQ = sg2.PARENT_MENU_SEQ
+			ORDER BY order_menu_set
+	    ) T1
+		LEFT OUTER JOIN MC_CMS_MENU_FILTER T2
+		ON T1.CMS_MENU_SEQ = T2.CMS_MENU_SEQ
+		WHERE T1.DEL_YN='N' AND T1.USE_YN='Y'
+		<choose> 
+        	<when test="menu_type == '1'.toString()">AND T1.MENU_TYPE IN ('2', '3')</when>
+        	<otherwise>AND T1.MENU_TYPE = #{menu_type}</otherwise>
+        </choose> 
+		<if test="!(filter_yn == null or filter_yn == '')" >
+			AND T2.FILTER_YN=#{filter_yn}
+		</if>
+		<if test="!(keyword == null or keyword == '')" >
+			AND PAGE_NAVI like CONCAT('%',#{keyword},'%')
+		</if>
+	</select>
+	
+	<select id="get_default_filter" parameterType="Map" resultType="mcmap">
+		SELECT
+			JUMIN_YN, BUSINO_YN, BUBINO_YN, EMAIL_YN, TEL_YN, CELL_YN, CARD_YN, FORBIDDEN_WORD
+		FROM 
+			MC_CMS_MENU_FILTER_DEF
+		WHERE
+			SITE_ID = #{site_id}
+	</select>
+	
+	<select id="get_menu_filter" parameterType="Map" resultType="mcmap">
+		SELECT
+			MAX(CMS_MENU_SEQ) AS CMS_MENU_SEQ, 
+			MAX(FILTER_YN) AS FILTER_YN, 
+			MAX(JUMIN_YN) AS JUMIN_YN, 
+			MAX(BUSINO_YN) AS BUSINO_YN, 
+			MAX(BUBINO_YN) AS BUBINO_YN, 
+			MAX(EMAIL_YN) AS EMAIL_YN, 
+			MAX(TEL_YN) AS TEL_YN, 
+			MAX(CELL_YN) AS CELL_YN, 
+			MAX(CARD_YN) AS CARD_YN,
+			MAX(FORBIDDEN_WORD) AS FORBIDDEN_WORD
+		FROM(
+			SELECT
+				CMS_MENU_SEQ, FILTER_YN, JUMIN_YN, BUSINO_YN, BUBINO_YN, EMAIL_YN, TEL_YN, CELL_YN, CARD_YN, '' AS FORBIDDEN_WORD
+			FROM MC_CMS_MENU_FILTER
+			WHERE CMS_MENU_SEQ = #{cms_menu_seq}
+			UNION ALL
+			SELECT
+				0 AS CMS_MENU_SEQ, '' AS FILTER_YN, '' AS JUMIN_YN, '' AS BUSINO_YN, '' AS BUBINO_YN, '' AS EMAIL_YN, '' AS TEL_YN, '' AS CELL_YN, '' AS CARD_YN, FORBIDDEN_WORD
+			FROM MC_CMS_MENU_FILTER_DEF
+			WHERE SITE_ID=#{site_id}
+		) T
+	</select>
+	
+	<update id="set_default_filter" parameterType="Map">
+		<selectKey keyProperty="cnt" resultType="int" order="BEFORE">
+		SELECT COUNT(1) FROM MC_CMS_MENU_FILTER_DEF WHERE SITE_ID=#{site_id}
+		</selectKey>
+		<choose>
+			<when test="cnt>0">
+			UPDATE MC_CMS_MENU_FILTER_DEF SET
+				JUMIN_YN = #{jumin_yn}
+				, BUSINO_YN = #{busino_yn}
+				, BUBINO_YN = #{bubino_yn}
+				, EMAIL_YN = #{email_yn}
+				, TEL_YN = #{tel_yn}
+				, CELL_YN = #{cell_yn}
+				, CARD_YN = #{card_yn}
+				, FORBIDDEN_WORD = #{forbidden_word}
+			WHERE SITE_ID=#{site_id}
+			</when>
+			<otherwise>
+			INSERT INTO MC_CMS_MENU_FILTER_DEF(SITE_ID, JUMIN_YN, BUSINO_YN, BUBINO_YN, EMAIL_YN, TEL_YN, CELL_YN, CARD_YN, FORBIDDEN_WORD)VALUES(
+				#{site_id}, #{jumin_yn}, #{busino_yn}, #{bubino_yn}, #{email_yn}, #{tel_yn}, #{cell_yn}, #{card_yn}, #{forbidden_word}
+			)
+			</otherwise>
+		</choose>
+	</update>
+	
+	<update id="set_default_filter_all" parameterType="Map">
+			UPDATE MC_CMS_MENU_FILTER SET
+				FILTER_YN = 'Y'
+				, JUMIN_YN = #{jumin_yn}
+				, BUSINO_YN = #{busino_yn}
+				, BUBINO_YN = #{bubino_yn}
+				, EMAIL_YN = #{email_yn}
+				, TEL_YN = #{tel_yn}
+				, CELL_YN = #{cell_yn}
+				, CARD_YN = #{card_yn}
+			WHERE SITE_ID=#{site_id} AND FILTER_YN='Y'
+	</update>
+	
+	<update id="set_menu_filter" parameterType="Map">
+		<selectKey keyProperty="cnt" resultType="int" order="BEFORE">
+		SELECT COUNT(1) FROM MC_CMS_MENU_FILTER WHERE SITE_ID=#{site_id} AND CMS_MENU_SEQ=#{cms_menu_seq}
+		</selectKey>
+		<choose>
+			<when test="cnt>0">
+			UPDATE MC_CMS_MENU_FILTER SET
+				FILTER_YN = #{filter_yn}
+				, JUMIN_YN = #{jumin_yn}
+				, BUSINO_YN = #{busino_yn}
+				, BUBINO_YN = #{bubino_yn}
+				, EMAIL_YN = #{email_yn}
+				, TEL_YN = #{tel_yn}
+				, CELL_YN = #{cell_yn}
+				, CARD_YN = #{card_yn}
+			WHERE SITE_ID=#{site_id} AND CMS_MENU_SEQ=#{cms_menu_seq}
+			</when>
+			<otherwise>
+			INSERT INTO MC_CMS_MENU_FILTER(SITE_ID, CMS_MENU_SEQ, FILTER_YN, JUMIN_YN, BUSINO_YN, BUBINO_YN, EMAIL_YN, TEL_YN, CELL_YN, CARD_YN)VALUES(
+				#{site_id}, #{cms_menu_seq}, #{filter_yn}, #{jumin_yn}, #{busino_yn}, #{bubino_yn}, #{email_yn}, #{tel_yn}, #{cell_yn}, #{card_yn}
+			)
+			</otherwise>
+		</choose>
+	</update>
+	
+	<update id="del_filter" parameterType="Map">
+		DELETE FROM MC_CMS_MENU_FILTER WHERE CMS_MENU_SEQ=#{cms_menu_seq}
+	</update>
+	
+	<update id="report_record" parameterType="Map">
+		<selectKey keyProperty="check_cnt" resultType="int" order="BEFORE">
+		SELECT COUNT(1) FROM MC_PERSONAL_DATA WHERE CMS_MENU_SEQ=#{cms_menu_seq} AND SUB_SEQ=#{sub_seq}
+		</selectKey>
+		<choose>
+			<when test="check_cnt>0">
+			UPDATE MC_PERSONAL_DATA SET
+				TITLE = #{title}
+				, JUMIN_CNT = #{jumin_cnt}
+				, JUMIN_CONTS = #{jumin_conts}
+				, BUSINO_CNT = #{busino_cnt}
+				, BUSINO_CONTS = #{busino_conts}
+				, BUBINO_CNT = #{bubino_cnt}
+				, BUBINO_CONTS = #{bubino_conts}
+				, EMAIL_CNT = #{email_cnt}
+				, EMAIL_CONTS = #{email_conts}
+				, TEL_CNT = #{tel_cnt}
+				, TEL_CONTS = #{tel_conts}
+				, CELL_CNT = #{cell_cnt}
+				, CELL_CONTS = #{cell_conts}
+				, CARD_CNT = #{card_cnt}
+				, CARD_CONTS = #{card_conts}
+			WHERE SITE_ID=#{site_id} 
+				AND CMS_MENU_SEQ=#{cms_menu_seq}
+				AND SUB_SEQ=#{sub_seq}
+			</when>
+			<otherwise>
+			INSERT INTO MC_PERSONAL_DATA(
+			 	MENU_NM,
+			 	SITE_ID,
+			 	CMS_MENU_SEQ,
+			 	SUB_SEQ,
+			 	TITLE,
+			 	REG_DT,
+			 	JUMIN_CNT,
+			 	JUMIN_CONTS,
+			 	BUSINO_CNT,
+			 	BUSINO_CONTS,
+			 	BUBINO_CNT,
+			 	BUBINO_CONTS,
+			 	EMAIL_CNT,
+			 	EMAIL_CONTS,
+			 	CELL_CNT,
+			 	CELL_CONTS,
+			 	TEL_CNT,
+			 	TEL_CONTS,
+			 	CARD_CNT,
+			 	CARD_CONTS
+			 ) VALUES(
+			 	(SELECT TITLE FROM MC_CMS_MENU WHERE CMS_MENU_SEQ=#{cms_menu_seq}),
+			 	#{site_id},
+			 	#{cms_menu_seq},
+			 	#{sub_seq},
+			 	#{title},
+			 	CURRENT_TIMESTAMP,
+			 	#{jumin_cnt},
+			 	#{jumin_conts},
+			 	#{busino_cnt},
+			 	#{busino_conts},
+			 	#{bubino_cnt},
+			 	#{bubino_conts},
+			 	#{email_cnt},
+			 	#{email_conts},
+			 	#{cell_cnt},
+			 	#{cell_conts},
+			 	#{tel_cnt},
+			 	#{tel_conts},
+			 	#{card_cnt},
+			 	#{card_conts}
+			 )
+			</otherwise>
+		</choose>
+	</update>
+	
+	<update id="report_delete" parameterType="Map">
+		DELETE FROM MC_PERSONAL_DATA WHERE CMS_MENU_SEQ=#{cms_menu_seq} AND SUB_SEQ=#{sub_seq}
+	</update>
+	
+	<select id="report_list_all" parameterType="Map" resultType="mcmap">
+		SELECT
+			CMS_MENU_SEQ, MENU_NM, JUMIN_TOTAL, BUSINO_TOTAL, BUBINO_TOTAL, EMAIL_TOTAL, CELL_TOTAL, TEL_TOTAL,  CARD_TOTAL,
+			(JUMIN_TOTAL + BUSINO_TOTAL + BUBINO_TOTAL + EMAIL_TOTAL + CELL_TOTAL + TEL_TOTAL + CARD_TOTAL) AS TOTAL	
+		FROM(
+			SELECT 
+				A.CMS_MENU_SEQ,
+				MAX(A.MENU_NM) as MENU_NM,
+				SUM(A.JUMIN_CNT) AS JUMIN_TOTAL,
+				SUM(A.BUSINO_CNT) AS BUSINO_TOTAL,
+				SUM(A.BUBINO_CNT) AS BUBINO_TOTAL,
+				SUM(A.EMAIL_CNT) AS EMAIL_TOTAL,
+				SUM(A.CELL_CNT) AS CELL_TOTAL,
+				SUM(A.TEL_CNT) AS TEL_TOTAL, 
+				SUM(A.CARD_CNT) AS CARD_TOTAL
+			FROM 
+				MC_PERSONAL_DATA A
+			<where>
+				<if test="!(start_dt == null or start_dt == '') or !(end_dt == null or end_dt == '')">				
+					AND DATE_FORMAT(a.REG_DT, '%Y-%m-%d') >= #{start_dt}
+					AND DATE_FORMAT(a.REG_DT, '%Y-%m-%d') <![CDATA[ <= ]]> #{end_dt}
+				</if>
+			</where>
+			GROUP BY 
+				A.CMS_MENU_SEQ
+		) T1
+	</select>
+	
+	<select id="report_list" parameterType="Map" resultType="mcmap">
+		SELECT PT1.* FROM (
+			SELECT 
+				CAST(@rownum:=@rownum+1 AS SIGNED) AS RN,
+				T1.*,
+				(JUMIN_TOTAL + BUSINO_TOTAL + BUBINO_TOTAL + EMAIL_TOTAL + CELL_TOTAL + TEL_TOTAL + CARD_TOTAL) AS TOTAL
+			FROM (
+				SELECT 
+					A.CMS_MENU_SEQ,
+					MAX(A.MENU_NM) as MENU_NM,
+					SUM(A.JUMIN_CNT) AS JUMIN_TOTAL,
+					SUM(A.BUSINO_CNT) AS BUSINO_TOTAL,
+					SUM(A.BUBINO_CNT) AS BUBINO_TOTAL,
+					SUM(A.EMAIL_CNT) AS EMAIL_TOTAL,
+					SUM(A.CELL_CNT) AS CELL_TOTAL,
+					SUM(A.TEL_CNT) AS TEL_TOTAL, 
+					SUM(A.CARD_CNT) AS CARD_TOTAL
+				FROM 
+					MC_PERSONAL_DATA A
+				<where>
+					<if test="!(start_dt == null or start_dt == '') or !(end_dt == null or end_dt == '')">				
+						AND DATE_FORMAT(a.REG_DT, '%Y-%m-%d') >= #{start_dt}
+						AND DATE_FORMAT(a.REG_DT, '%Y-%m-%d') <![CDATA[ <= ]]> #{end_dt}
+					</if>
+				</where>
+				GROUP BY 
+					A.CMS_MENU_SEQ
+			) T1, (SELECT @rownum:=0) TMP
+		) PT1
+		WHERE RN BETWEEN IFNULL(#{rows, jdbcType=INTEGER},10) * (IFNULL(#{cpage, jdbcType=INTEGER},1) - 1) + 1 AND IFNULL(#{rows, jdbcType=INTEGER},10) * IFNULL(#{cpage, jdbcType=INTEGER},1)
+	</select>
+	
+	<select id="report_pagination" parameterType="Map" resultType="mcmap">
+	    SELECT
+	        CEIL(COUNT(1)/IFNULL(#{rows}, 10)) TOTALPAGE,
+	        COUNT(1) TOTALCOUNT
+        FROM (
+				SELECT 
+					A.CMS_MENU_SEQ
+				FROM 
+					MC_PERSONAL_DATA A
+				<where>
+					<if test="!(start_dt == null or start_dt == '') or !(end_dt == null or end_dt == '')">				
+						AND DATE_FORMAT(a.REG_DT, '%Y-%m-%d') >= #{start_dt}
+						AND DATE_FORMAT(a.REG_DT, '%Y-%m-%d') <![CDATA[ <= ]]> #{end_dt}
+					</if>
+				</where>
+				GROUP BY 
+					A.CMS_MENU_SEQ
+		) T1
+	</select>
+	
+	<select id="detail_list_all" parameterType="Map" resultType="mcmap">
+		SELECT A.*
+		FROM
+		(
+		SELECT CAST(@ROWNUM:=@ROWNUM+1 AS SIGNED) AS RN, TB.*
+		FROM(
+			SELECT
+			    *
+			FROM MC_PERSONAL_DATA a	
+			WHERE a.CMS_MENU_SEQ=#{cms_menu_seq}
+			<if test="!(start_dt == null or start_dt == '') or !(end_dt == null or end_dt == '')">				
+				AND DATE_FORMAT(a.REG_DT, '%Y-%m-%d') >= #{start_dt}
+				AND DATE_FORMAT(a.REG_DT, '%Y-%m-%d') <![CDATA[ <= ]]> #{end_dt}
+			</if>
+			ORDER BY SEQ DESC
+		) AS TB, 
+		(SELECT @ROWNUM:=0) AS R
+		)AS A
+	</select>
+	
+	<select id="detail_list" parameterType="Map" resultType="mcmap">
+		SELECT A.*
+		FROM
+		(
+		SELECT CAST(@ROWNUM:=@ROWNUM+1 AS SIGNED) AS RN, TB.*
+		FROM(
+			SELECT
+			    *
+			FROM MC_PERSONAL_DATA a	
+			WHERE a.CMS_MENU_SEQ=#{cms_menu_seq}
+			<if test="!(start_dt == null or start_dt == '') or !(end_dt == null or end_dt == '')">				
+				AND DATE_FORMAT(a.REG_DT, '%Y-%m-%d') >= #{start_dt}
+				AND DATE_FORMAT(a.REG_DT, '%Y-%m-%d') <![CDATA[ <= ]]> #{end_dt}
+			</if>
+			ORDER BY SEQ DESC
+		) AS TB, 
+		(SELECT @ROWNUM:=0) AS R
+		)AS A
+		WHERE CEIL(RN/IFNULL(#{rows},10))=IFNULL(#{cpage},1)
+	</select>
+	
+	<select id="detail_pagination" parameterType="Map" resultType="mcmap">
+	    SELECT
+	        CEIL(COUNT(1)/IFNULL(#{rows}, 10)) TOTALPAGE,
+	        COUNT(1) TOTALCOUNT
+	    FROM MC_PERSONAL_DATA a
+		WHERE a.CMS_MENU_SEQ=#{cms_menu_seq}
+		<if test="!(start_dt == null or start_dt == '') or !(end_dt == null or end_dt == '')">				
+			AND DATE_FORMAT(a.REG_DT, '%Y-%m-%d') >= #{start_dt}
+			AND DATE_FORMAT(a.REG_DT, '%Y-%m-%d') <![CDATA[ <= ]]> #{end_dt}
+		</if>
+	</select>
+	
+	<select id="dashboardChart1" parameterType="Map" resultType="mcmap">
+		SELECT
+			JUMIN_TOTAL, BUSINO_TOTAL, BUBINO_TOTAL, EMAIL_TOTAL, CELL_TOTAL, TEL_TOTAL,  CARD_TOTAL,
+			(JUMIN_TOTAL + BUSINO_TOTAL + BUBINO_TOTAL + EMAIL_TOTAL + CELL_TOTAL + TEL_TOTAL + CARD_TOTAL) AS TOTAL	
+		FROM(
+			SELECT 
+				IFNULL(SUM(A.JUMIN_CNT), 0) AS JUMIN_TOTAL,
+				IFNULL(SUM(A.BUSINO_CNT), 0) AS BUSINO_TOTAL,
+				IFNULL(SUM(A.BUBINO_CNT), 0) AS BUBINO_TOTAL,
+				IFNULL(SUM(A.EMAIL_CNT), 0) AS EMAIL_TOTAL,
+				IFNULL(SUM(A.CELL_CNT), 0) AS CELL_TOTAL,
+				IFNULL(SUM(A.TEL_CNT), 0) AS TEL_TOTAL, 
+				IFNULL(SUM(A.CARD_CNT), 0) AS CARD_TOTAL
+			FROM 
+				MC_PERSONAL_DATA A
+			WHERE DATE_FORMAT(reg_dt, '%Y%m') = DATE_FORMAT(sysdate(), '%Y%m')
+				AND SITE_ID=#{site_id}
+		) T1
+	</select>
+	
+	<select id="dashboardChart2" parameterType="Map" resultType="mcmap">
+		SELECT	MM,
+			JUMIN_TOTAL, BUSINO_TOTAL, BUBINO_TOTAL, EMAIL_TOTAL, CELL_TOTAL, TEL_TOTAL, CARD_TOTAL
+		FROM(
+			SELECT 
+				B.MM,
+				SUM(A.JUMIN_CNT) AS JUMIN_TOTAL,
+				SUM(A.BUSINO_CNT) AS BUSINO_TOTAL,
+				SUM(A.BUBINO_CNT) AS BUBINO_TOTAL,
+				SUM(A.EMAIL_CNT) AS EMAIL_TOTAL,
+				SUM(A.CELL_CNT) AS CELL_TOTAL,
+				SUM(A.TEL_CNT) AS TEL_TOTAL, 
+				SUM(A.CARD_CNT) AS CARD_TOTAL
+			FROM 
+				(SELECT DISTINCT DATE_FORMAT(d, '%Y') AS YY, DATE_FORMAT(d, '%Y-%m') AS MM  FROM MC_DATE WHERE DATE_FORMAT(SYSDATE(), '%Y') = DATE_FORMAT(d, '%Y') ORDER BY d) B LEFT OUTER JOIN  (SELECT * FROM MC_PERSONAL_DATA WHERE SITE_ID=#{site_id}) A
+			ON DATE_FORMAT(A.reg_dt, '%Y-%m') = B.MM
+			WHERE B.YY = DATE_FORMAT(SYSDATE(), '%Y')
+			GROUP BY B.MM
+		) T1
+	</select>
+	
+	<select id="dashboardSetStatus" parameterType="Map" resultType="mcmap">
+		SELECT
+			SUM(CNT1) AS CNT1, SUM(CNT2) AS CNT2
+		FROM(
+			SELECT COUNT(1) AS CNT1, 0 AS CNT2 FROM MC_CMS_MENU_FILTER WHERE FILTER_YN='Y' AND SITE_ID=#{site_id}
+			UNION ALL
+			SELECT 0 AS CNT1, COUNT(1) AS CNT2 FROM MC_CMS_MENU_FILTER WHERE FILTER_YN='N' AND SITE_ID=#{site_id}
+		) T
+	</select>
+	
+	<select id="daylistChart" parameterType="Map" resultType="mcmap">
+		SELECT	YMD,
+			JUMIN_TOTAL, BUSINO_TOTAL, BUBINO_TOTAL, EMAIL_TOTAL, CELL_TOTAL, TEL_TOTAL, CARD_TOTAL
+		FROM(
+			SELECT 
+				B.YMD,
+				SUM(A.JUMIN_CNT) AS JUMIN_TOTAL,
+				SUM(A.BUSINO_CNT) AS BUSINO_TOTAL,
+				SUM(A.BUBINO_CNT) AS BUBINO_TOTAL,
+				SUM(A.EMAIL_CNT) AS EMAIL_TOTAL,
+				SUM(A.CELL_CNT) AS CELL_TOTAL,
+				SUM(A.TEL_CNT) AS TEL_TOTAL, 
+				SUM(A.CARD_CNT) AS CARD_TOTAL
+			FROM 
+				(SELECT DISTINCT DATE_FORMAT(d, '%Y-%m') AS YM, DATE_FORMAT(d, '%Y-%m-%d') AS YMD  FROM MC_DATE WHERE CONCAT(#{year},'-',#{month}) = DATE_FORMAT(d, '%Y-%m') ORDER BY d) B LEFT OUTER JOIN (SELECT * FROM MC_PERSONAL_DATA WHERE SITE_ID=#{site_id}) A
+			ON DATE_FORMAT(A.reg_dt, '%Y-%m-%d') = B.YMD
+			GROUP BY B.YMD
+		) T1
+		ORDER BY YMD
+	</select>
+	
+	<select id="daylist" parameterType="Map" resultType="mcmap">
+		SELECT A.*
+		FROM
+		(
+		SELECT CAST(@ROWNUM:=@ROWNUM+1 AS SIGNED) AS RN, TB.*
+		FROM(
+			SELECT
+			    CMS_MENU_SEQ, MENU_NM, DATE_FORMAT(MAX(REG_DT), '%Y-%m-%d') AS REG_DT,
+			    SUM(JUMIN_CNT)+SUM(BUSINO_CNT)+SUM(BUBINO_CNT)+SUM(EMAIL_CNT)+SUM(CELL_CNT)+SUM(TEL_CNT)+SUM(CARD_CNT) AS TOTAL
+			FROM MC_PERSONAL_DATA a	
+			<where>
+			<if test="!(start_dt == null or start_dt == '') or !(end_dt == null or end_dt == '')">				
+				AND DATE_FORMAT(a.REG_DT, '%Y-%m-%d') >= #{start_dt}
+				AND DATE_FORMAT(a.REG_DT, '%Y-%m-%d') <![CDATA[ <= ]]> #{end_dt}
+			</if>
+			<if test="!(keyword == null or keyword == '')">				
+				AND MENU_NM like CONCAT('%',#{keyword},'%')
+			</if>
+			<if test="!(site_id == null or site_id == '')">				
+				AND SITE_ID=#{site_id}
+			</if>
+			</where>
+			GROUP BY CMS_MENU_SEQ
+		) AS TB, 
+		(SELECT @ROWNUM:=0) AS R
+		)AS A
+		WHERE CEIL(RN/IFNULL(#{rows},10))=IFNULL(#{cpage},1)
+	</select>
+	
+	<select id="daylist_pagination" parameterType="Map" resultType="mcmap">
+	    SELECT
+	        CEIL(COUNT(1)/IFNULL(#{rows}, 10)) TOTALPAGE,
+	        COUNT(1) TOTALCOUNT
+		FROM (
+			SELECT
+			    CMS_MENU_SEQ
+			FROM MC_PERSONAL_DATA a	
+			<where>
+			<if test="!(start_dt == null or start_dt == '') or !(end_dt == null or end_dt == '')">				
+				AND DATE_FORMAT(a.REG_DT, '%Y-%m-%d') >= #{start_dt}
+				AND DATE_FORMAT(a.REG_DT, '%Y-%m-%d') <![CDATA[ <= ]]> #{end_dt}
+			</if>
+			<if test="!(keyword == null or keyword == '')">				
+				AND MENU_NM like CONCAT('%',#{keyword},'%')
+			</if>
+			<if test="!(site_id == null or site_id == '')">				
+				AND SITE_ID=#{site_id}
+			</if>
+			</where>
+			GROUP BY CMS_MENU_SEQ
+		) T	
+	</select>
+	
+</mapper>

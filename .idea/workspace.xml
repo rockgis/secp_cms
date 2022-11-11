@@ -1,0 +1,355 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="ArtifactsWorkspaceSettings">
+    <artifacts-to-build>
+      <artifact name="secp_cms:war" />
+    </artifacts-to-build>
+  </component>
+  <component name="AutoImportSettings">
+    <option name="autoReloadType" value="SELECTIVE" />
+  </component>
+  <component name="ChangeListManager">
+    <list default="true" id="a83330c6-5b1a-47b4-a901-d58e698a408f" name="Changes" comment="경영환경 개선사업">
+      <change afterPath="$PROJECT_DIR$/src/main/webapp/js/admin/pdf_create.js" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/com/mc/web/programs/back/biz001/AdminBiz001Controller.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/mc/web/programs/back/biz001/AdminBiz001Controller.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/webapp/AUIGrid/AUIGrid.js" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/webapp/AUIGrid/AUIGrid.js" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/webapp/AUIGrid/AUIGridLicense.js" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/webapp/AUIGrid/AUIGridLicense.js" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/webapp/WEB-INF/jsp/super/homepage/biz001/indexB01.jsp" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/webapp/WEB-INF/jsp/super/homepage/biz001/indexB01.jsp" afterDir="false" />
+    </list>
+    <option name="SHOW_DIALOG" value="false" />
+    <option name="HIGHLIGHT_CONFLICTS" value="true" />
+    <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
+    <option name="LAST_RESOLUTION" value="IGNORE" />
+  </component>
+  <component name="FileTemplateManagerImpl">
+    <option name="RECENT_TEMPLATES">
+      <list>
+        <option value="Class" />
+      </list>
+    </option>
+  </component>
+  <component name="JpbToolWindowState">
+    <option name="myId2FirstActivated">
+      <map>
+        <entry key="com.haulmont.jpb.jpaStructure" value="true" />
+      </map>
+    </option>
+    <option name="myId2Visible">
+      <map>
+        <entry key="com.haulmont.jpb.jpaStructure" value="true" />
+      </map>
+    </option>
+  </component>
+  <component name="LogFilters">
+    <option name="FILTER_ERRORS" value="false" />
+    <option name="FILTER_WARNINGS" value="false" />
+    <option name="FILTER_INFO" value="true" />
+    <option name="FILTER_DEBUG" value="true" />
+    <option name="CUSTOM_FILTER" />
+  </component>
+  <component name="MarkdownSettingsMigration">
+    <option name="stateVersion" value="1" />
+  </component>
+  <component name="MavenImportPreferences">
+    <option name="generalSettings">
+      <MavenGeneralSettings>
+        <option name="useMavenConfig" value="true" />
+        <option name="userSettingsFile" value="X:\dev\rep\settings_widows.xml" />
+      </MavenGeneralSettings>
+    </option>
+  </component>
+  <component name="ProjectId" id="2Gvn4T0z72uJIvNPYFkuePGQ3Dd" />
+  <component name="ProjectLevelVcsManager">
+    <ConfirmationsSetting value="2" id="Add" />
+  </component>
+  <component name="ProjectViewState">
+    <option name="hideEmptyMiddlePackages" value="true" />
+    <option name="showLibraryContents" value="true" />
+  </component>
+  <component name="PropertiesComponent">{
+  &quot;keyToString&quot;: {
+    &quot;FileHistory.org.jetbrains.idea.svn.history.SvnHistoryProvider_flatOrder0&quot;: &quot;0&quot;,
+    &quot;FileHistory.org.jetbrains.idea.svn.history.SvnHistoryProvider_flatOrder1&quot;: &quot;1&quot;,
+    &quot;FileHistory.org.jetbrains.idea.svn.history.SvnHistoryProvider_flatOrder2&quot;: &quot;2&quot;,
+    &quot;FileHistory.org.jetbrains.idea.svn.history.SvnHistoryProvider_flatOrder3&quot;: &quot;3&quot;,
+    &quot;FileHistory.org.jetbrains.idea.svn.history.SvnHistoryProvider_flatOrder4&quot;: &quot;4&quot;,
+    &quot;FileHistory.org.jetbrains.idea.svn.history.SvnHistoryProvider_flatWidth0&quot;: &quot;240&quot;,
+    &quot;FileHistory.org.jetbrains.idea.svn.history.SvnHistoryProvider_flatWidth1&quot;: &quot;240&quot;,
+    &quot;FileHistory.org.jetbrains.idea.svn.history.SvnHistoryProvider_flatWidth2&quot;: &quot;240&quot;,
+    &quot;FileHistory.org.jetbrains.idea.svn.history.SvnHistoryProvider_flatWidth3&quot;: &quot;240&quot;,
+    &quot;FileHistory.org.jetbrains.idea.svn.history.SvnHistoryProvider_flatWidth4&quot;: &quot;240&quot;,
+    &quot;FileHistory.org.jetbrains.idea.svn.history.SvnHistoryProvider_treeOrder0&quot;: &quot;0&quot;,
+    &quot;FileHistory.org.jetbrains.idea.svn.history.SvnHistoryProvider_treeOrder1&quot;: &quot;1&quot;,
+    &quot;FileHistory.org.jetbrains.idea.svn.history.SvnHistoryProvider_treeOrder2&quot;: &quot;2&quot;,
+    &quot;FileHistory.org.jetbrains.idea.svn.history.SvnHistoryProvider_treeOrder3&quot;: &quot;3&quot;,
+    &quot;FileHistory.org.jetbrains.idea.svn.history.SvnHistoryProvider_treeOrder4&quot;: &quot;4&quot;,
+    &quot;FileHistory.org.jetbrains.idea.svn.history.SvnHistoryProvider_treeWidth0&quot;: &quot;240&quot;,
+    &quot;FileHistory.org.jetbrains.idea.svn.history.SvnHistoryProvider_treeWidth1&quot;: &quot;240&quot;,
+    &quot;FileHistory.org.jetbrains.idea.svn.history.SvnHistoryProvider_treeWidth2&quot;: &quot;240&quot;,
+    &quot;FileHistory.org.jetbrains.idea.svn.history.SvnHistoryProvider_treeWidth3&quot;: &quot;240&quot;,
+    &quot;FileHistory.org.jetbrains.idea.svn.history.SvnHistoryProvider_treeWidth4&quot;: &quot;240&quot;,
+    &quot;RunOnceActivity.OpenProjectViewOnStart&quot;: &quot;true&quot;,
+    &quot;RunOnceActivity.ShowReadmeOnStart&quot;: &quot;true&quot;,
+    &quot;WebServerToolWindowFactoryState&quot;: &quot;false&quot;,
+    &quot;last_opened_file_path&quot;: &quot;/Volumes/dev/data/mslk_workspace/secp_cms&quot;,
+    &quot;project.structure.last.edited&quot;: &quot;Libraries&quot;,
+    &quot;project.structure.proportion&quot;: &quot;0.15&quot;,
+    &quot;project.structure.side.proportion&quot;: &quot;0.2&quot;,
+    &quot;settings.editor.selected.configurable&quot;: &quot;preferences.pluginManager&quot;,
+    &quot;spring.configuration.checksum&quot;: &quot;f690ae3f69697c17cddc307181d5b858&quot;
+  }
+}</component>
+  <component name="RecentsManager">
+    <key name="CopyFile.RECENT_KEYS">
+      <recent name="C:\dev\eGovFrameDev-3.10.0-64bit\workspace\secp_cms\src\main\webapp\WEB-INF\jsp\super\homepage\biz002" />
+      <recent name="C:\dev\eGovFrameDev-3.10.0-64bit\workspace\secp_cms\src\main\webapp\WEB-INF\jsp\super\homepage\biz008" />
+      <recent name="C:\dev\eGovFrameDev-3.10.0-64bit\workspace\secp_cms\src\main\webapp\WEB-INF\jsp\super\homepage\biz007" />
+      <recent name="C:\dev\eGovFrameDev-3.10.0-64bit\workspace\secp_cms\src\main\webapp\WEB-INF\jsp\super\homepage\biz005" />
+      <recent name="C:\dev\eGovFrameDev-3.10.0-64bit\workspace\secp_cms\src\main\webapp\WEB-INF\jsp\super\homepage\biz004" />
+    </key>
+    <key name="MoveFile.RECENT_KEYS">
+      <recent name="C:\dev\eGovFrameDev-3.10.0-64bit\workspace\secp_cms\src\main\webapp\upload\common\biz001" />
+      <recent name="C:\dev\eGovFrameDev-3.10.0-64bit\workspace\secp_cms\src\main\webapp\js\admin\js-xlsx" />
+      <recent name="C:\dev\eGovFrameDev-3.10.0-64bit\workspace\secp_cms\src\main\webapp\js\admin" />
+      <recent name="C:\dev\eGovFrameDev-3.10.0-64bit\workspace\secp_cms\src\main\webapp\js\secp\js-xlsx" />
+      <recent name="C:\dev\eGovFrameDev-3.10.0-64bit\workspace\secp_cms\src\main\webapp\upload\common" />
+    </key>
+  </component>
+  <component name="RunManager">
+    <configuration name="Tomcat 9.0.68" type="#com.intellij.j2ee.web.tomcat.TomcatRunConfigurationFactory" factoryName="Local" APPLICATION_SERVER_NAME="Tomcat 9.0.68" ALTERNATIVE_JRE_ENABLED="false" nameIsGenerated="true">
+      <option name="OPEN_IN_BROWSER_URL" value="http://127.0.0.1:18080/" />
+      <option name="UPDATING_POLICY" value="restart-server" />
+      <deployment>
+        <artifact name="secp_cms:war">
+          <settings>
+            <option name="CONTEXT_PATH" value="/" />
+          </settings>
+        </artifact>
+      </deployment>
+      <server-settings>
+        <option name="BASE_DIRECTORY_NAME" value="fd6d371a-33cc-4bcc-86a9-913a527b7833" />
+        <option name="HTTP_PORT" value="18080" />
+      </server-settings>
+      <predefined_log_file enabled="true" id="Tomcat" />
+      <predefined_log_file enabled="true" id="Tomcat Catalina" />
+      <predefined_log_file id="Tomcat Manager" />
+      <predefined_log_file id="Tomcat Host Manager" />
+      <predefined_log_file id="Tomcat Localhost Access" />
+      <RunnerSettings RunnerId="Debug">
+        <option name="DEBUG_PORT" value="49236" />
+      </RunnerSettings>
+      <ConfigurationWrapper VM_VAR="JAVA_OPTS" RunnerId="Cover">
+        <option name="USE_ENV_VARIABLES" value="true" />
+        <STARTUP>
+          <option name="USE_DEFAULT" value="true" />
+          <option name="SCRIPT" value="" />
+          <option name="VM_PARAMETERS" value="" />
+          <option name="PROGRAM_PARAMETERS" value="" />
+        </STARTUP>
+        <SHUTDOWN>
+          <option name="USE_DEFAULT" value="true" />
+          <option name="SCRIPT" value="" />
+          <option name="VM_PARAMETERS" value="" />
+          <option name="PROGRAM_PARAMETERS" value="" />
+        </SHUTDOWN>
+      </ConfigurationWrapper>
+      <ConfigurationWrapper VM_VAR="JAVA_OPTS" RunnerId="Debug">
+        <option name="USE_ENV_VARIABLES" value="true" />
+        <STARTUP>
+          <option name="USE_DEFAULT" value="true" />
+          <option name="SCRIPT" value="" />
+          <option name="VM_PARAMETERS" value="" />
+          <option name="PROGRAM_PARAMETERS" value="" />
+        </STARTUP>
+        <SHUTDOWN>
+          <option name="USE_DEFAULT" value="true" />
+          <option name="SCRIPT" value="" />
+          <option name="VM_PARAMETERS" value="" />
+          <option name="PROGRAM_PARAMETERS" value="" />
+        </SHUTDOWN>
+      </ConfigurationWrapper>
+      <ConfigurationWrapper VM_VAR="JAVA_OPTS" RunnerId="Profile">
+        <option name="USE_ENV_VARIABLES" value="true" />
+        <STARTUP>
+          <option name="USE_DEFAULT" value="true" />
+          <option name="SCRIPT" value="" />
+          <option name="VM_PARAMETERS" value="" />
+          <option name="PROGRAM_PARAMETERS" value="" />
+        </STARTUP>
+        <SHUTDOWN>
+          <option name="USE_DEFAULT" value="true" />
+          <option name="SCRIPT" value="" />
+          <option name="VM_PARAMETERS" value="" />
+          <option name="PROGRAM_PARAMETERS" value="" />
+        </SHUTDOWN>
+      </ConfigurationWrapper>
+      <ConfigurationWrapper VM_VAR="JAVA_OPTS" RunnerId="Run">
+        <option name="USE_ENV_VARIABLES" value="true" />
+        <STARTUP>
+          <option name="USE_DEFAULT" value="true" />
+          <option name="SCRIPT" value="" />
+          <option name="VM_PARAMETERS" value="" />
+          <option name="PROGRAM_PARAMETERS" value="" />
+        </STARTUP>
+        <SHUTDOWN>
+          <option name="USE_DEFAULT" value="true" />
+          <option name="SCRIPT" value="" />
+          <option name="VM_PARAMETERS" value="" />
+          <option name="PROGRAM_PARAMETERS" value="" />
+        </SHUTDOWN>
+      </ConfigurationWrapper>
+      <method v="2">
+        <option name="Make" enabled="true" />
+        <option name="BuildArtifacts" enabled="true">
+          <artifact name="secp_cms:war" />
+        </option>
+      </method>
+    </configuration>
+  </component>
+  <component name="SpellCheckerSettings" RuntimeDictionaries="0" Folders="0" CustomDictionaries="0" DefaultDictionary="application-level" UseSingleDictionary="true" transferred="true" />
+  <component name="SvnConfiguration" cleanupOnStartRun="true">
+    <configuration>$USER_HOME$/.subversion</configuration>
+    <supportedVersion>125</supportedVersion>
+  </component>
+  <component name="TaskManager">
+    <task active="true" id="Default" summary="Default task">
+      <changelist id="a83330c6-5b1a-47b4-a901-d58e698a408f" name="Changes" comment="" />
+      <created>1667277737340</created>
+      <option name="number" value="Default" />
+      <option name="presentableId" value="Default" />
+      <updated>1667277737340</updated>
+      <workItem from="1667277739137" duration="8245000" />
+      <workItem from="1667300857931" duration="2135000" />
+      <workItem from="1667303619731" duration="25788000" />
+      <workItem from="1667378061163" duration="66475000" />
+      <workItem from="1668061128850" duration="19446000" />
+      <workItem from="1668127561768" duration="16997000" />
+      <workItem from="1668157052216" duration="197000" />
+      <workItem from="1668157273090" duration="344000" />
+      <workItem from="1668157632347" duration="19000" />
+    </task>
+    <task id="LOCAL-00001" summary="관리자 로그인 페이지 수정">
+      <created>1667346210748</created>
+      <option name="number" value="00001" />
+      <option name="presentableId" value="LOCAL-00001" />
+      <option name="project" value="LOCAL" />
+      <updated>1667346210748</updated>
+    </task>
+    <task id="LOCAL-00002" summary="경영환경 개선사업 접수현황">
+      <created>1667367916231</created>
+      <option name="number" value="00002" />
+      <option name="presentableId" value="LOCAL-00002" />
+      <option name="project" value="LOCAL" />
+      <updated>1667367916231</updated>
+    </task>
+    <task id="LOCAL-00003" summary="경영환경 개선사업 접수현황">
+      <created>1667367953091</created>
+      <option name="number" value="00003" />
+      <option name="presentableId" value="LOCAL-00003" />
+      <option name="project" value="LOCAL" />
+      <updated>1667367953091</updated>
+    </task>
+    <task id="LOCAL-00004" summary="경영환경 개선사업 접수현황">
+      <created>1667367995412</created>
+      <option name="number" value="00004" />
+      <option name="presentableId" value="LOCAL-00004" />
+      <option name="project" value="LOCAL" />
+      <updated>1667367995412</updated>
+    </task>
+    <task id="LOCAL-00005" summary="관리자 헤더 정보 입력을 위한 예제 정리">
+      <created>1667475739807</created>
+      <option name="number" value="00005" />
+      <option name="presentableId" value="LOCAL-00005" />
+      <option name="project" value="LOCAL" />
+      <updated>1667475739807</updated>
+    </task>
+    <task id="LOCAL-00006" summary="자바 스크립트 정리">
+      <created>1667536595261</created>
+      <option name="number" value="00006" />
+      <option name="presentableId" value="LOCAL-00006" />
+      <option name="project" value="LOCAL" />
+      <updated>1667536595261</updated>
+    </task>
+    <task id="LOCAL-00007" summary="경영환경 개선사업">
+      <created>1667901867911</created>
+      <option name="number" value="00007" />
+      <option name="presentableId" value="LOCAL-00007" />
+      <option name="project" value="LOCAL" />
+      <updated>1667901867911</updated>
+    </task>
+    <task id="LOCAL-00008" summary="경영환경 개선사업 일괄업로드">
+      <created>1668062073436</created>
+      <option name="number" value="00008" />
+      <option name="presentableId" value="LOCAL-00008" />
+      <option name="project" value="LOCAL" />
+      <updated>1668062073436</updated>
+    </task>
+    <task id="LOCAL-00009" summary="경영환경 개선사업 일괄업로드">
+      <created>1668062140295</created>
+      <option name="number" value="00009" />
+      <option name="presentableId" value="LOCAL-00009" />
+      <option name="project" value="LOCAL" />
+      <updated>1668062140295</updated>
+    </task>
+    <task id="LOCAL-00010" summary="경영환경 개선사업 일괄업로드">
+      <created>1668062839026</created>
+      <option name="number" value="00010" />
+      <option name="presentableId" value="LOCAL-00010" />
+      <option name="project" value="LOCAL" />
+      <updated>1668062839026</updated>
+    </task>
+    <task id="LOCAL-00011" summary="경영환경 개선사업">
+      <created>1668062911539</created>
+      <option name="number" value="00011" />
+      <option name="presentableId" value="LOCAL-00011" />
+      <option name="project" value="LOCAL" />
+      <updated>1668062911539</updated>
+    </task>
+    <task id="LOCAL-00012" summary="관리자 링크 정리">
+      <created>1668066006461</created>
+      <option name="number" value="00012" />
+      <option name="presentableId" value="LOCAL-00012" />
+      <option name="project" value="LOCAL" />
+      <updated>1668066006461</updated>
+    </task>
+    <task id="LOCAL-00013" summary="재기지원 정리">
+      <created>1668066999795</created>
+      <option name="number" value="00013" />
+      <option name="presentableId" value="LOCAL-00013" />
+      <option name="project" value="LOCAL" />
+      <updated>1668066999795</updated>
+    </task>
+    <task id="LOCAL-00014" summary="관리자 메뉴 정리">
+      <created>1668069080468</created>
+      <option name="number" value="00014" />
+      <option name="presentableId" value="LOCAL-00014" />
+      <option name="project" value="LOCAL" />
+      <updated>1668069080468</updated>
+    </task>
+    <task id="LOCAL-00015" summary="경영환경 개선사업">
+      <created>1668146260365</created>
+      <option name="number" value="00015" />
+      <option name="presentableId" value="LOCAL-00015" />
+      <option name="project" value="LOCAL" />
+      <updated>1668146260365</updated>
+    </task>
+    <option name="localTasksCounter" value="16" />
+    <servers />
+  </component>
+  <component name="TypeScriptGeneratedFilesManager">
+    <option name="version" value="3" />
+  </component>
+  <component name="VcsManagerConfiguration">
+    <MESSAGE value="관리자 로그인 페이지 수정" />
+    <MESSAGE value="경영환경 개선사업 접수현황" />
+    <MESSAGE value="관리자 헤더 정보 입력을 위한 예제 정리" />
+    <MESSAGE value="자바 스크립트 정리" />
+    <MESSAGE value="경영환경 개선사업 일괄 업로드" />
+    <MESSAGE value="경영환경 개선사업 일괄업로드" />
+    <MESSAGE value="관리자 링크 정리" />
+    <MESSAGE value="재기지원 정리" />
+    <MESSAGE value="관리자 메뉴 정리" />
+    <MESSAGE value="경영환경 개선사업" />
+    <option name="LAST_COMMIT_MESSAGE" value="경영환경 개선사업" />
+  </component>
+</project>

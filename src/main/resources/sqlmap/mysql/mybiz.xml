@@ -1,0 +1,69 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="mybiz">
+	<select id="getBizList" parameterType="Map" resultType="MCMap">
+		SELECT
+		    T1.BIZ_YR
+		    , T1.BIZ_NO
+		    , T1.BIZ_CYCL
+		    , M.BIZ_NM
+		    , T1.INDVDL_GRP_SE_CD
+		    , M.BSNS_CNNC_URL
+		    , T1.BIZ_SE_CD
+		    , T1.DATA_SE_CD
+		    , T1.RCPT_STEP
+		    , T3.CODE_NM AS RCPT_STEP_NM
+		    , T1.RCPT_STTS
+		    , T2.CODE_NM AS RCPT_STTS_NM
+		    , T1.BIZ_REL_AGRE_YN
+		    , T1.MYDATA_AGRE_YN
+		    , T1.RCPT_DATA
+		    , T1.REG_DT
+		    , T1.RGTR
+		    , T1.MDFCN_DT
+		    , T1.MDFR
+		    , M.RCPT_BGNGDAY
+			, M.RCPT_ENDDAY
+		FROM TN_INDVDL_RCPT_BIZ_MNG T1
+		LEFT JOIN TN_BIZ_CYCL_MNG M
+    		ON T1.BIZ_YR = M.BIZ_YR AND T1.BIZ_CYCL = M.BIZ_CYCL AND T1.BIZ_NO = M.BIZ_NO
+		LEFT JOIN MC_COMMON_CODE T2
+		    ON T1.RCPT_STTS = T2.CODE AND T2.CODE_GROUP_SEQ = '13'
+		LEFT JOIN MC_COMMON_CODE T3
+		    ON T1.RCPT_STEP = T3.CODE AND T3.CODE_GROUP_SEQ = '14'
+		WHERE T1.RGTR = #{userId}
+		
+		UNION ALL
+		
+		SELECT
+		    T1.BIZ_YR
+		    , T1.BIZ_NO
+		    , T1.BIZ_CYCL
+		    , M.BIZ_NM
+		    , T1.INDVDL_GRP_SE_CD
+		    , M.BSNS_CNNC_URL
+		    , T1.BIZ_SE_CD
+		    , T1.DATA_SE_CD
+		    , T1.RCPT_STEP
+		    , T3.CODE_NM AS RCPT_STEP_NM
+		    , T1.RCPT_STTS
+		    , T2.CODE_NM AS RCPT_STTS_NM
+		    , T1.BIZ_REL_AGRE_YN
+		    , '' AS MYDATA_AGRE_YN
+		    , T1.RCPT_DATA
+		    , T1.REG_DT
+		    , T1.RGTR
+		    , T1.MDFCN_DT
+		    , T1.MDFR
+		    , M.RCPT_BGNGDAY
+			, M.RCPT_ENDDAY
+		FROM TN_GRP_RCPT_BIZ_MNG T1
+		LEFT JOIN TN_BIZ_CYCL_MNG M
+    		ON T1.BIZ_YR = M.BIZ_YR AND T1.BIZ_CYCL = M.BIZ_CYCL AND T1.BIZ_NO = M.BIZ_NO
+		LEFT JOIN MC_COMMON_CODE T2
+		    ON T1.RCPT_STTS = T2.CODE AND T2.CODE_GROUP_SEQ = '13'
+		LEFT JOIN MC_COMMON_CODE T3
+		    ON T1.RCPT_STEP = T3.CODE AND T3.CODE_GROUP_SEQ = '14'
+		WHERE T1.RGTR = #{userId}		
+	</select>
+</mapper>

@@ -1,0 +1,69 @@
+.iosSwitch {
+	margin-bottom: 27px;
+	display: inline-block;
+	-webkit-transform: translate3d(0,0,0);
+	-moz-transform: translate3d(0,0,0);
+	-o-transform: translate3d(0,0,0);
+	transform: translate3d(0,0,0);
+}
+
+.iosSwitchInner {
+	position: relative;
+	padding: 2px;
+	width: 50px;
+	height: 8px;
+	-webkit-border-radius: 50px;
+	-moz-border-radius: 50px;
+	-o-border-radius: 50px;
+	border-radius: 50px;
+	-webkit-box-sizing: border-box;
+	-moz-box-sizing: border-box;
+	-o-box-sizing: border-box;
+	box-sizing: border-box;
+	-webkit-transition: background .1s ease;
+	-moz-transition: background .1s ease;
+	-o-transition: background .1s ease;
+	transition: background .1s ease;
+	cursor: pointer;
+	display: inline-block;
+	background: #e5e5e5;
+	-webkit-transform: translate3d(0,0,0);
+	-moz-transform: translate3d(0,0,0);
+	-o-transform: translate3d(0,0,0);
+	transform: translate3d(0,0,0);
+}
+
+.iosSwitchInner .iosSwitchHandle {
+	position: absolute;
+	top:-5px;
+	left: 4px;
+	width: 14px;
+	height: 14px;
+	-webkit-border-radius: 50%;
+	-moz-border-radius: 50%;
+	-o-border-radius: 50%;
+	border-radius: 50%;
+	-webkit-transition: transform .1s ease;
+	-moz-transition: transform .1s ease;
+	-o-transition: transform .1s ease;
+	transition: transform .1s ease;
+	display: inline-block;
+	background: #fff;
+	border:solid 2px #bbb;
+	-webkit-transform: translate3d(0,0,0);
+	-moz-transform: translate3d(0,0,0);
+	-o-transform: translate3d(0,0,0);
+	transform: translate3d(0,0,0);
+}
+
+.checked .iosSwitchInner {
+	background: #c5d9ee;
+}
+
+.checked .iosSwitchInner .iosSwitchHandle {
+	-webkit-transform: translate3d(24px,0,0);
+	-moz-transform: translate3d(24px,0,0);
+	-o-transform: translate3d(24px,0,0);
+	transform: translate3d(24px,0,0);
+	border:solid 2px #658ed7;
+}

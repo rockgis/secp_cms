@@ -1,0 +1,170 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="apply">
+	<select id="isAgree" parameterType="Map" resultType="String">
+		SELECT
+			CASE WHEN BIZ_REL_AGRE_YN IS NULL OR count(1) = 0 OR BIZ_REL_AGRE_YN = ''
+		        THEN 'N'
+		        ELSE BIZ_REL_AGRE_YN
+		        END AS IS_AGREE
+		<choose>
+			<when test="indvdlGrpSeCd eq '01'">
+				FROM TN_INDVDL_RCPT_BIZ_MNG
+			</when>
+			<otherwise>
+				FROM TN_GRP_RCPT_BIZ_MNG
+			</otherwise>
+		</choose>
+		WHERE
+			BIZ_YR = #{bizYr}
+			AND BIZ_NO = #{bizNo}
+			AND BIZ_CYCL = #{bizCycl}
+			<choose>
+				<when test="indvdlGrpSeCd eq '01'">
+					AND BIZ_REL_AGRE_YN = 'Y'
+				</when>
+				<otherwise>
+					AND MYDATA_AGRE_YN = 'Y'
+				</otherwise>
+			</choose>
+			AND RGTR = #{userId}
+	</select>
+	
+	<select id="getListData" parameterType="Map" resultType="MCMap">
+		SELECT
+			BIZ_YR
+			, BIZ_NO
+			, BIZ_CYCL
+			, BIZ_NM
+			, RCPT_BGNGDAY
+			, RCPT_ENDDAY
+			, INDVDL_GRP_SE_CD
+			, APLY_TYPE_CD
+			, BSNS_CNNC_URL
+		FROM TN_BIZ_CYCL_MNG
+		WHERE
+			DEL_YN = 'N'
+	</select>
+
+	<select id="indvdlSelectOne" parameterType="Map" resultType="MCMap">
+		SELECT *
+		FROM TN_INDVDL_RCPT_BIZ_MNG
+		WHERE
+			BIZ_YR = #{bizYr}
+			AND BIZ_NO = #{bizNo}
+			AND BIZ_CYCL = #{bizCycl}
+			AND RGTR = #{userId}
+	</select>
+	
+	
+	<select id="selectBizSnNow" parameterType="Map" resultType="Integer">
+		SELECT IFNULL(max(RCEPT_SN),0)
+		FROM TN_INDVDL_RCPT_BIZ_MNG
+		WHERE
+			BIZ_YR = #{BIZ_YR}
+			AND BIZ_NO = #{BIZ_NO}
+			AND BIZ_CYCL = #{BIZ_CYCL}
+	</select>
+	
+	
+	
+
+	<insert id="indvdlInsert" parameterType="Map">
+		INSERT INTO TN_INDVDL_RCPT_BIZ_MNG
+		(
+			BIZ_YR				
+			, BIZ_NO			
+			, BIZ_CYCL			
+			, RCEPT_SN			 
+			, INDVDL_GRP_SE_CD	
+			, BIZ_SE_CD			
+			, DATA_SE_CD		
+			, RCPT_STEP			
+			, RCPT_STTS			
+			, BIZ_REL_AGRE_YN	
+			, MYDATA_AGRE_YN	
+			, RCPT_DATA			
+			, REG_DT			
+			, RGTR				
+			, MDFCN_DT			
+			, MDFR				
+		)
+		VALUES
+		(
+			#{BIZ_YR}
+			, #{BIZ_NO}
+			, #{BIZ_CYCL}
+ 			, #{RCEPT_SN}
+<!-- 			,( select NUM FROM (SELECT Max(BIZ_SN)+1 AS NUM FROM TN_INDVDL_RCPT_BIZ_MNG WHERE 1=1 AND BIZ_YR=#{BIZ_YR} AND BIZ_NO=#{BIZ_NO} AND BIZ_CYCL = #{BIZ_CYCL} ) A) -->
+			, #{INDVDL_GRP_SE_CD}
+			, #{BIZ_SE_CD}
+			, #{DATA_SE_CD}
+			, #{RCPT_STEP}
+			, #{RCPT_STTS}
+			, #{BIZ_REL_AGRE_YN}
+			, #{MYDATA_AGRE_YN}
+			, #{RCPT_DATA}
+			, DATE_FORMAT(now(),'%Y%m%d%H%i%s')
+			, #{RGTR}
+			, DATE_FORMAT(now(),'%Y%m%d%H%i%s')
+			, #{MDFR}
+		)
+	</insert>
+	
+	<update id="indvdlUpdate" parameterType="Map">
+		UPDATE TN_INDVDL_RCPT_BIZ_MNG
+		SET
+			<trim prefixOverrides=",">
+				<if test='INDVDL_GRP_SE_CD neq null or INDVDL_GRP_SE_CD neq ""'>
+					INDVDL_GRP_SE_CD = #{INDVDL_GRP_SE_CD}
+				</if>
+				<if test='BIZ_SE_CD neq null or BIZ_SE_CD neq ""'>
+					, BIZ_SE_CD = #{BIZ_SE_CD}
+				</if>
+				<if test='DATA_SE_CD neq null or DATA_SE_CD neq ""'>
+					, DATA_SE_CD = #{DATA_SE_CD}
+				</if>
+				<if test='RCPT_STEP neq null or RCPT_STEP neq ""'>
+					, RCPT_STEP = #{RCPT_STEP}
+				</if>
+				<if test='RCPT_STTS neq null or RCPT_STTS neq ""'>
+					, RCPT_STTS = #{RCPT_STTS}
+				</if>
+				<if test='BIZ_REL_AGRE_YN neq null or BIZ_REL_AGRE_YN neq ""'>
+					, BIZ_REL_AGRE_YN = #{BIZ_REL_AGRE_YN}
+				</if>
+				<if test='MYDATA_AGRE_YN neq null or MYDATA_AGRE_YN neq ""'>
+					, MYDATA_AGRE_YN = #{MYDATA_AGRE_YN}
+				</if>
+				<if test='RCPT_DATA neq null or RCPT_DATA neq ""'>
+					, RCPT_DATA = #{rcptData}
+				</if>
+					, MDFCN_DT = DATE_FORMAT(SYSDATE(), '%Y%m%d%H%i%S')
+					, MDFR = #{userId}
+			</trim>
+		WHERE
+			BIZ_YR = #{bizYr}
+			AND BIZ_NO = #{bizNo}
+			AND BIZ_CYCL = #{bizCycl}
+			AND RGTR = #{userId}
+			
+	</update>
+	
+	<select id="grpSelectOne" parameterType="Map" resultType="MCMap">
+		SELECT *
+		FROM TN_GRP_RCPT_BIZ_MNG
+		WHERE
+			BIZ_YR = #{BIZ_YR}
+			AND BIZ_NO = #{BIZ_NO}
+			AND BIZ_CYCL = #{BIZ_CYCL}
+			AND RGTR = #{userId}
+	</select>
+	
+	<insert id="grpInsert" parameterType="Map">
+	
+	</insert>
+	
+	<update id="grpUpdate" parameterType="Map">
+		
+	</update>
+</mapper>

@@ -1,0 +1,168 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+	   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xmlns:p="http://www.springframework.org/schema/p"
+       xmlns:context="http://www.springframework.org/schema/context"
+       xmlns:tx="http://www.springframework.org/schema/tx"
+       xmlns:task="http://www.springframework.org/schema/task"
+       xmlns:mvc="http://www.springframework.org/schema/mvc"
+       xmlns:cache="http://www.springframework.org/schema/cache"
+       xmlns:util="http://www.springframework.org/schema/util"
+       xmlns:aop="http://www.springframework.org/schema/aop"
+       xmlns:security="http://www.springframework.org/schema/security"
+       xmlns:websocket="http://www.springframework.org/schema/websocket"
+	   xsi:schemaLocation="http://www.springframework.org/schema/beans
+	   					   http://www.springframework.org/schema/beans/spring-beans-4.3.xsd
+	   					   http://www.springframework.org/schema/tx
+						   http://www.springframework.org/schema/tx/spring-tx-4.3.xsd
+				           http://www.springframework.org/schema/context
+				           http://www.springframework.org/schema/context/spring-context-4.3.xsd
+				           http://www.springframework.org/schema/task 
+ 						   http://www.springframework.org/schema/task/spring-task-4.3.xsd
+ 						   http://www.springframework.org/schema/mvc
+        				   http://www.springframework.org/schema/mvc/spring-mvc-4.3.xsd
+        				   http://www.springframework.org/schema/cache 
+        				   http://www.springframework.org/schema/cache/spring-cache-4.3.xsd
+        				   http://www.springframework.org/schema/util
+        				   http://www.springframework.org/schema/util/spring-util-4.3.xsd
+        				   http://www.springframework.org/schema/aop 
+        				   http://www.springframework.org/schema/aop/spring-aop-4.3.xsd
+        				   http://www.springframework.org/schema/security
+        				   http://www.springframework.org/schema/security/spring-security-4.2.xsd
+        				   http://www.springframework.org/schema/websocket 
+        				   http://www.springframework.org/schema/websocket/spring-websocket-4.3.xsd
+        				   ">
+        
+	<context:component-scan base-package="com.mc.web" />
+	<task:executor id="threadPoolTaskExecutor" pool-size="100" />
+    <task:scheduler id="threadPoolTaskScheduler" pool-size="100"/>
+    <task:annotation-driven executor="threadPoolTaskExecutor" scheduler="threadPoolTaskScheduler"/>
+	
+	<cache:annotation-driven/>
+	<security:global-method-security secured-annotations="enabled" />
+	
+	<bean id="cacheManager" class="org.springframework.cache.ehcache.EhCacheCacheManager" p:cache-manager-ref="ehcache"/>
+	<bean id="ehcache" class="org.springframework.cache.ehcache.EhCacheManagerFactoryBean"
+	      p:config-location="classpath:/config/ehcache.xml"  p:shared="true"/>
+	<bean id="defaultKeyGenerator" class="org.springframework.cache.interceptor.DefaultKeyGenerator" />
+	      
+	<mvc:default-servlet-handler default-servlet-name="default" />
+	<!-- 
+		※ was 별 default servlet name
+		Tomcat : default
+		Resin : resin-file
+		Weblogic :  FileServlet
+		WebSphere : SimpleFileServlet
+		jetty : default
+		jboss : default
+		jeus : WorkerServlet
+	 -->
+	
+	<mvc:annotation-driven>
+	    <mvc:message-converters>
+	        <!-- @ResponseBody로 String 처리할때 한글처리 -->
+	        <bean class="org.springframework.http.converter.StringHttpMessageConverter">
+	            <property name="supportedMediaTypes">
+	                <list>
+	                    <value>text/html;charset=UTF-8</value>
+	                </list>
+	            </property>
+	        </bean>
+	    </mvc:message-converters>
+	</mvc:annotation-driven>
+	
+	<util:properties id="config" location="classpath:/config/mc.properties" />	
+	
+	<bean class="org.springframework.web.servlet.view.InternalResourceViewResolver">
+		<property name="prefix" value="/WEB-INF/jsp/" />
+		<property name="suffix" value=".jsp" />
+	</bean>
+	
+	<!-- <websocket:message-broker application-destination-prefix="/app" user-destination-prefix="/user">
+		<websocket:stomp-endpoint path="/websock">
+			<websocket:sockjs />
+		</websocket:stomp-endpoint>
+		<websocket:simple-broker prefix="/topic, /queue"/>
+	</websocket:message-broker> -->
+
+    <mvc:interceptors>
+        <mvc:interceptor><!-- 관리자 로그인 체크 -->
+            <mvc:mapping path="/super/**/*.do" />
+            <mvc:exclude-mapping path="/super/system/left.do" />
+            <mvc:exclude-mapping path="/super/site/left.do" />
+            <mvc:exclude-mapping path="/super/homepage/left.do" />
+            <mvc:exclude-mapping path="/super/homepage/index.do" />
+            <mvc:exclude-mapping path="/super/login/*.do" />
+            <mvc:exclude-mapping path="/super/inc/overplus.do" />
+            <mvc:exclude-mapping path="/super/inc/header.do" />
+            <mvc:exclude-mapping path="/super/tracking.do" />
+            <mvc:exclude-mapping path="/super/layout/admin.do" />
+			<mvc:exclude-mapping path="/super/homepage/member/index.do"/>
+            <bean class="com.mc.web.interceptor.AdminLoginInterceptor" />
+        </mvc:interceptor>
+        <mvc:interceptor><!-- 개인정보 필터 -->
+            <mvc:mapping path="/*/lay*/**/*.do" />
+            <mvc:exclude-mapping path="/*/layout/lay*.do" />
+            <mvc:exclude-mapping path="/*/layout/main.do" />
+            <mvc:exclude-mapping path="/super/layout/admin.do" />
+            <bean class="com.mc.web.interceptor.WordFilterInterceptor" />
+        </mvc:interceptor>
+        <mvc:interceptor><!-- 페이지 권한 넘겨줌 -->
+            <mvc:mapping path="/*/lay*/**/*.do" />
+            <mvc:exclude-mapping path="/*/layout/lay*.do" />
+            <bean class="com.mc.web.interceptor.PageAuthInterceptor" />
+        </mvc:interceptor>
+    	<mvc:interceptor><!-- IP체크 -->
+            <mvc:mapping path="/super/**/*" />
+            <mvc:exclude-mapping path="/super/system/left.do" />
+            <mvc:exclude-mapping path="/super/homepage/left.do" />
+    		<bean class="com.mc.web.interceptor.IpCehckInterceptor" />
+        </mvc:interceptor>
+        <mvc:interceptor><!-- 지원사업 관련 -->
+        	<!-- 지원사업 관련 -->
+        	<mvc:mapping path="/apply/**/*.do" />
+        	<mvc:exclude-mapping path="/apply/list.do" />
+        	<mvc:exclude-mapping path="/apply/get-list.do" />
+        	<bean class="egovframework.com.cmm.interceptor.AuthenticInterceptor" />
+        </mvc:interceptor>
+        <mvc:interceptor><!-- 나의 신청 현황 관련 -->
+        	<mvc:mapping path="/mybiz/**/*.do" />
+        	<bean class="egovframework.com.cmm.interceptor.AuthenticInterceptor" />
+        </mvc:interceptor>
+        <mvc:interceptor><!-- 회원 관련 -->
+        	<mvc:mapping path="/member/login.do" />
+        	<mvc:mapping path="/member/join.do" />
+        	<bean class="egovframework.com.cmm.interceptor.MemberInterceptor" />
+        </mvc:interceptor>
+    </mvc:interceptors>
+
+	<bean class="org.springframework.web.servlet.handler.SimpleMappingExceptionResolver">
+		<property name="defaultErrorView" value="egovframework/com/cmm/error/egovError"/>
+		<property name="exceptionMappings">
+			<props>
+				<prop key="org.springframework.dao.DataAccessException">egovframework/com/cmm/error/dataAccessFailure</prop>
+				<prop key="org.springframework.transaction.TransactionException">egovframework/com/cmm/error/dataAccessFailure</prop>
+				<prop key="egovframework.rte.fdl.cmmn.exception.EgovBizException">egovframework/com/cmm/error/egovBizException</prop>
+				<prop key="org.springframework.web.HttpSessionRequiredException">egovframework/com/uat/uia/EgovLoginUsr</prop>
+				<prop key="com.mc.web.exception.FileUploadException">egovframework/com/cmm/error/FileUploadException</prop>
+			</props>
+		</property>
+	</bean>
+	
+    <bean id="mc.txManager" class="org.springframework.jdbc.datasource.DataSourceTransactionManager">
+		<property name="dataSource" ref="mc.dataSource"/>
+	</bean>	
+	<tx:annotation-driven transaction-manager="mc.txManager" proxy-target-class="true"/>
+	
+	<tx:advice id="txAdvice1" transaction-manager="mc.txManager">
+	   <tx:attributes>	 
+	       <tx:method name="*" propagation="REQUIRED" rollback-for="Exception"/>
+	   </tx:attributes>
+	</tx:advice>
+    
+	<aop:config>
+		<aop:pointcut id="requiredTx1" expression="execution(* com.mc.web..*Impl.*(..))"/>
+		<aop:advisor advice-ref="txAdvice1" pointcut-ref="requiredTx1" />
+	</aop:config>
+	
+</beans>

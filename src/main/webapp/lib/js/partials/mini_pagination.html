@@ -1,0 +1,10 @@
+<p id="history_p" data-ng-show="totalPage > 0">
+<!-- 메뉴 백업 리스트같은 작은 페이징 -->
+	<span>
+	<a data-ng-repeat="page in pages" data-ng-click="selectPage(page)">
+		<span data-ng-if="isActive(page)"><b>{{page}}</b></span>
+		<span data-ng-if="!isActive(page)">{{page}}</span>
+	</a>
+	&nbsp;
+	</span>
+</p>

@@ -1,0 +1,204 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="tracking">
+	<select id="loginList" parameterType="Map" resultType="mcmap">
+		SELECT
+			PT1.*, PT2.SITE_TITLE as TITLE
+		FROM(
+			SELECT PT1.*, PT2.GROUP_SEQ FROM	(
+				SELECT
+					CAST(@rownum:=@rownum+1 AS SIGNED) AS RN, 
+					TB.* 
+				FROM(
+					SELECT
+						T1.SEQ,
+						T1.MEMBER_ID, 
+						T1.MEMBER_NAME,
+						T1.LOGIN_IP,
+						T1.LOGIN_DATE
+					FROM 
+						MC_STAFF_LOGIN_TRACKING T1 
+					WHERE
+					<![CDATA[
+						T1.LOGIN_DATE >= #{start_date} AND T1.LOGIN_DATE <= #{end_date}
+					]]> 
+					<if test="!(keyword == null or keyword == '')" >
+						<choose>
+							<when test="condition == 'member_id'.toString()">AND T1.MEMBER_ID LIKE CONCAT('%',#{keyword},'%')</when>
+							<when test="condition == 'member_name'.toString()">AND T1.MEMBER_NAME LIKE CONCAT('%',#{keyword},'%')</when>
+						</choose>
+	        		</if>
+					ORDER BY MEMBER_NAME ASC 
+				) TB, (SELECT @rownum:=0) TMP
+			) PT1 LEFT OUTER JOIN MC_MEMBER PT2
+			ON PT1.MEMBER_ID = PT2.MEMBER_ID
+		)PT1
+		LEFT OUTER JOIN
+		(
+			SELECT 
+				 MEMBER_ID, GROUP_CONCAT(SUBSTRING_INDEX(T2.SITE_TITLE,'.',-1) SEPARATOR ', ') AS SITE_TITLE
+			FROM (
+				SELECT	
+					DISTINCT SUBSTRING(T1.PAGE_NAVI,1, CASE WHEN INSTR(T1.PAGE_NAVI,'>') = 0 THEN LENGTH(T1.PAGE_NAVI)	
+					ELSE INSTR(T1.PAGE_NAVI,'>')-1 END) AS SITE_TITLE,
+					B.MEMBER_ID
+			FROM (
+					SELECT  
+						sg.CMS_MENU_SEQ,
+						SUBSTR(SYS_CONNECT_BY_PATH_MENU_SITE(sg.CMS_MENU_SEQ, '>'),2) AS PAGE_NAVI
+					FROM (
+						SELECT  start_with_connect_by_memu() AS PARENT_MENU_SEQ, @level AS MENU_LEVEL
+						FROM (
+							SELECT @start_with := 0,
+									 @id := @start_with,
+									 @level := 0,
+									 @rn := 0
+						) vars, MC_CMS_MENU
+						WHERE   @id IS NOT NULL
+					) sg2
+					JOIN    MC_CMS_MENU sg
+					ON      sg.CMS_MENU_SEQ = sg2.PARENT_MENU_SEQ
+				) AS T1
+				JOIN MC_CMS_STAFF B ON T1.CMS_MENU_SEQ = B.CMS_MENU_SEQ
+			) AS T2
+			GROUP BY MEMBER_ID
+		)PT2
+		ON PT1.MEMBER_ID=PT2.MEMBER_ID
+		WHERE RN BETWEEN IFNULL(#{rows, jdbcType=INTEGER},10) * (IFNULL(#{cpage, jdbcType=INTEGER},1) - 1) + 1 AND IFNULL(#{rows, jdbcType=INTEGER},10) * IFNULL(#{cpage, jdbcType=INTEGER},1)
+	</select>
+	
+	<select id="loginPagination" parameterType="Map" resultType="mcmap">
+		SELECT PT1.* FROM	(
+			SELECT 
+				CEIL(COUNT(TB.MEMBER_ID) / IFNULL(#{rows, jdbcType=INTEGER} ,10)) TOTALPAGE,
+				COUNT(TB.MEMBER_ID) TOTALCOUNT
+			FROM(
+				SELECT
+					T1.MEMBER_ID, 
+					T1.MEMBER_NAME
+				FROM 
+					MC_STAFF_LOGIN_TRACKING T1 
+				WHERE
+				<![CDATA[
+					T1.LOGIN_DATE >= #{start_date} AND T1.LOGIN_DATE <= #{end_date}
+				]]> 
+				<if test="!(keyword == null or keyword == '')" >
+					<choose>
+						<when test="condition == 'member_id'.toString()">AND T1.MEMBER_ID LIKE CONCAT('%',#{keyword},'%')</when>
+						<when test="condition == 'member_name'.toString()">AND T1.MEMBER_NAME LIKE CONCAT('%',#{keyword},'%')</when>
+					</choose>
+        		</if>
+				ORDER BY MEMBER_NAME ASC
+			) TB
+		) PT1
+	</select>
+	
+	<select id="viewList" parameterType="Map" resultType="mcmap">
+		SELECT PT1.* FROM	(
+			SELECT 
+				CAST(@rownum:=@rownum+1 AS SIGNED) AS RN, 
+				TB.* 
+			FROM (
+				SELECT 
+					T1.*,
+					DATE_FORMAT(T1.LOCATION_TIME,'%Y-%m-%d %H:%i:%S') AS LTIME
+				FROM MC_STAFF_LOCATION_TRACKING T1
+				WHERE T1.PARENT_SEQ IN (
+					SELECT SEQ FROM MC_STAFF_LOGIN_TRACKING WHERE <![CDATA[LOGIN_DATE >= #{start_date} AND LOGIN_DATE <= #{end_date}]]> 
+				)
+				AND T1.PARENT_SEQ = #{parent_seq}
+				ORDER BY T1.SEQ DESC
+			) TB, (SELECT @rownum:=0) TMP
+		) PT1
+		WHERE RN BETWEEN IFNULL(#{rows, jdbcType=INTEGER},10) * (IFNULL(#{cpage, jdbcType=INTEGER},1) - 1) + 1 AND IFNULL(#{rows, jdbcType=INTEGER},10) * IFNULL(#{cpage, jdbcType=INTEGER},1)
+	</select>
+	
+	<select id="viewPagination" parameterType="Map" resultType="mcmap">
+		SELECT 
+		CEIL(COUNT(SEQ) / IFNULL(#{rows, jdbcType=INTEGER} ,10)) TOTALPAGE,
+		COUNT(SEQ) TOTALCOUNT
+		FROM MC_STAFF_LOCATION_TRACKING
+		WHERE PARENT_SEQ IN (
+			SELECT SEQ FROM MC_STAFF_LOGIN_TRACKING WHERE <![CDATA[LOGIN_DATE >= #{start_date} AND LOGIN_DATE <= #{end_date}]]>
+		)
+		AND PARENT_SEQ = #{parent_seq}
+	</select>
+	
+		
+	<select id="getLogin" parameterType="Map" resultType="mcmap">
+		SELECT 
+			SEQ 
+		FROM 
+			MC_STAFF_LOGIN_TRACKING
+		WHERE MEMBER_ID = #{member_id}
+			AND LOGIN_IP = #{login_ip}
+			AND	LOGIN_DATE = #{login_date}
+	</select>
+	
+	<insert id="setLogin" parameterType="Map">
+		INSERT INTO MC_STAFF_LOGIN_TRACKING (
+			MEMBER_ID,
+			MEMBER_NAME,
+			LOGIN_DATE,
+			LOGIN_IP
+		) VALUES(
+			#{member_id},
+			#{member_name},
+			#{login_date},
+			#{login_ip}
+		)
+	</insert>	
+	
+	<insert id="setLocation" parameterType="Map">
+		INSERT INTO MC_STAFF_LOCATION_TRACKING (
+			PARENT_SEQ,
+			LOCATION_TIME,
+			TITLE,
+			JOB,
+			URL,
+			PARAMS
+		) VALUES(
+			#{parent_seq},
+			CURRENT_TIME,
+			#{title},
+			#{job},
+			#{url},
+			#{params}
+		)
+	</insert>
+	
+	<select id="viewAuth" parameterType="Map" resultType="mcmap">
+		SELECT
+			T1.PAGE_NAVI
+   		FROM (
+			SELECT  
+				sg.CMS_MENU_SEQ,
+				SUBSTR(SYS_CONNECT_BY_PATH_MENU(sg.CMS_MENU_SEQ, '>'),2) AS PAGE_NAVI
+			FROM (
+				SELECT  start_with_connect_by_memu() AS PARENT_MENU_SEQ, @level AS MENU_LEVEL
+				FROM (
+					SELECT @start_with := ifnull(0, '1'),
+							 @id := @start_with,
+							 @level := 0,
+							 @rn := 0
+				) vars, MC_CMS_MENU
+				WHERE   @id IS NOT NULL
+			) sg2
+			JOIN    MC_CMS_MENU sg
+			ON      sg.CMS_MENU_SEQ = sg2.PARENT_MENU_SEQ
+		) AS T1
+		JOIN MC_CMS_STAFF B ON T1.CMS_MENU_SEQ = B.CMS_MENU_SEQ AND B.MEMBER_ID = #{member_id}
+	</select>	
+	
+	<delete id="removeSchedule1">
+	<![CDATA[
+		DELETE FROM MC_STAFF_LOCATION_TRACKING WHERE location_time <  DATE_ADD(SYSDATE(), INTERVAL -6 MONTH)
+	]]>
+	</delete>
+	
+	<delete id="removeSchedule2">
+	<![CDATA[
+		DELETE FROM MC_STAFF_LOGIN_TRACKING WHERE login_date <  DATE_ADD(SYSDATE(), INTERVAL -6 MONTH)
+	]]>
+	</delete>
+</mapper>

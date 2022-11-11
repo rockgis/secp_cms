@@ -1,0 +1,158 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="biz001">
+	
+	 
+	 
+	<select id="list" parameterType="Map" resultType="mcmap">
+		<!-- 사업관리 리스트 -->
+		SELECT 
+			BIZ_YR					-- 사업_년도
+			, BIZ_NO				-- 사업_번호
+			, BIZ_CYCL				-- 사업_차수
+			, BIZ_SN				-- 사업_일련번호
+			, BIZ_NM				-- 사업_명
+			, PRGRS_CN				-- 진행_내용
+			, RCPT_BGNGDAY			-- 접수_시작일
+			, RCPT_ENDDAY			-- 접수_종료일
+			, INDVDL_GRP_SE_CD		-- 개인_단체_구분_코드
+			, APLY_TYPE_CD			-- 신청_유형_코드
+			, APLY_PSBLTY_RGN_CD	-- 신청_가능_지역_코드	
+			, BIZ_CLSF_CD			-- 사업_분류_코드
+			, REL_SITE				-- 관련_사이트
+			, BIZ_SE_CD				-- 사업_구분_코드
+			, RCPT_NOPE				-- 접수_인원수
+			, PRUF_DCMNT_GUIDANCE	-- 증빙_서류_안내
+			, PIC					-- 담당자 
+			, PIC_CTTPC				-- 담당자_연락처
+			, PIC_EML				-- 담당자_이메일
+			, DDLN_YN				-- 마감_여부
+			, WRTANC_HDER			-- 공고문_헤더
+			, WRTANC_IMG			-- 공고문_이미지
+			, DEL_YN 				-- 삭제_여부
+			, REG_DT				-- 등록일시
+			, RGTR					-- 등록자
+			, MDFCN_DT				-- 수정_일시
+			, MDFR					-- 수정자
+		FROM TN_BIZ_CYCL_MNG
+		WHERE DEL_YN = 'N'
+		
+	</select>
+	
+	<select id="pageinfo" parameterType="Map" resultType="String">
+		<!-- 사업관리 페이지 -->
+		SELECT 
+			BIZ_YR
+			, BIZ_NO
+			, BIZ_CYCL
+			, BIZ_SN
+			, BIZ_NM
+			, PRGRS_CN
+			, RCPT_BGNGDAY
+			, RCPT_ENDDAY
+			, INDVDL_GRP_SE_CD
+			, APLY_TYPE_CD
+			, APLY_PSBLTY_RGN_CD
+			, BIZ_CLSF_CD, REL_SITE
+			, BIZ_SE_CD
+			, RCPT_NOPE
+			, PRUF_DCMNT_GUIDANCE
+			, PIC
+			, PIC_CTTPC
+			, PIC_EML
+			, DDLN_YN
+			, WRTANC_HDER
+			, WRTANC_IMG
+			, REG_DT
+			, RGTR
+			, MDFCN_DT
+			, MDFR
+		FROM TN_BIZ_CYCL_MNG;
+	
+	</select>
+	
+	<select id="info" parameterType="Map" resultType="mcmap">
+		<!-- 사업관리 정보 -->
+		
+	</select>
+	
+	<update id="modify" parameterType="Map">
+		<!-- 사업관리 수정 -->
+		
+	</update>
+	
+	<insert id="insert" parameterType="Map">
+		<!-- 사업관리 등록 -->
+		
+	</insert>
+	
+	<update id="delete" parameterType="Map">
+		<!-- 사업관리 삭제 -->
+	</update>
+	
+	
+	
+	<select id="selectGridHeader" resultType="mcmap">
+<!-- 		<![CDATA[ -->
+			select hder_data from TN_META_OTPT_DATA
+<!-- 		]]> -->
+	</select>
+	
+	
+	<select id="selectGridData" parameterType="Map" resultType="mcmap">
+		<!-- 사업지원 내역 그리드 데이터 -->
+		SELECT 
+			RCPT_DATA
+		FROM TN_INDVDL_RCPT_BIZ_MNG
+		WHERE 1=1
+		AND BIZ_YR=#{bizYr}
+		AND BIZ_NO=#{bizNo}
+		AND BIZ_CYCL = #{bizCycl}
+<!-- 		AND BIZ_SN=#{bizSn} -->
+	</select>
+	
+	<insert id="insertChgMng" parameterType="Map">
+		INSERT INTO TN_INDVDL_RCPT_BIZ_CHG_MNG (
+			BIZ_YR
+			, BIZ_NO
+			, BIZ_CYCL
+			, CHG_SN
+			, INDVDL_GRP_SE_CD
+			, BIZ_SE_CD
+			, DATA_SE_CD
+			, RCPT_STEP
+			, RCPT_STTS
+			, BIZ_REL_AGRE_YN
+			, _AGRE_YN
+			, RCPT_DATA
+			, REG_DT
+			, RGTR
+		) VALUES (
+			#{bizYr}
+			, #{bizNo}
+			, #{bizCycl}
+			, (
+				SELECT A.CHG_SN
+				FROM (
+					SELECT CAST(IFNULL(MAX(CAST(CHG_SN AS UNSIGNED)+1), 1) AS CHAR(2)) AS CHG_SN
+					FROM TN_INDVDL_RCPT_BIZ_CHG_MNG 
+					WHERE 
+						BIZ_YR = #{bizYr}
+						AND BIZ_NO = #{bizNo}
+						AND BIZ_CYCL = #{bizCycl}
+						AND RGTR = #{userId}
+				) A
+			)
+			, '01'
+			, #{bizSeCd}
+			, #{dataSeCd}
+			, #{rcptStep}
+			, #{rcptStts}
+			, 'Y'
+			, #{_agreYn}
+			, #{rcptData}
+			, DATE_FORMAT(SYSDATE(), '%Y%m%d%H%i%S')
+			, #{userId}
+		)
+	</insert>
+</mapper>

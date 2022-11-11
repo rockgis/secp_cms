@@ -1,0 +1,146 @@
+<?xml version="1.0" encoding="UTF-8"?>  
+<ehcache xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="http://ehcache.org/ehcache.xsd" updateCheck="false">     
+    
+    <!-- 이중화환경에서 사용 2004/UDP 방화벽 확인-->  
+	<!-- <cacheManagerPeerProviderFactory class="net.sf.ehcache.distribution.RMICacheManagerPeerProviderFactory" properties="peerDiscovery=automatic,multicastGroupAddress=230.0.0.1, multicastGroupPort=2004" /> -->
+	<!-- <cacheManagerPeerListenerFactory class="net.sf.ehcache.distribution.RMICacheManagerPeerListenerFactory" properties="socketTimeoutMillis=2000"/> -->
+    <!-- 이중화환경에서 사용 -->
+    
+    <defaultCache   
+        eternal="false"   
+        maxElementsInMemory="1000"  
+        overflowToDisk="false"   
+        diskPersistent="false"   
+        timeToIdleSeconds="0"  
+        timeToLiveSeconds="600"   
+        memoryStoreEvictionPolicy="LRU"/>  
+  
+    <cache   
+        name="mainCache"   
+        eternal="false"  
+        maxElementsInMemory="1000"   
+        overflowToDisk="false"   
+        diskPersistent="false"  
+        timeToIdleSeconds="0"   
+        timeToLiveSeconds="300"  
+        memoryStoreEvictionPolicy="LRU">
+        <!--이중화환경에서 사용  -->
+		<!-- <cacheEventListenerFactory class="net.sf.ehcache.distribution.RMICacheReplicatorFactory" /> -->
+    </cache>  
+  
+    <cache   
+        name="menuCache"   
+        eternal="false"  
+        maxElementsInMemory="1000"   
+        overflowToDisk="false"   
+        diskPersistent="false"  
+        timeToIdleSeconds="0"   
+        timeToLiveSeconds="3600"  
+        memoryStoreEvictionPolicy="LRU">
+        <!--이중화환경에서 사용  -->
+		<!-- <cacheEventListenerFactory class="net.sf.ehcache.distribution.RMICacheReplicatorFactory" /> -->
+    </cache>  
+    
+    <cache   
+        name="dashboardCache"   
+        eternal="false"  
+        maxElementsInMemory="1000"   
+        overflowToDisk="false"   
+        diskPersistent="false"  
+        timeToIdleSeconds="0"   
+        timeToLiveSeconds="600"  
+        memoryStoreEvictionPolicy="LRU">
+        <!--이중화환경에서 사용  -->
+		<!-- <cacheEventListenerFactory class="net.sf.ehcache.distribution.RMICacheReplicatorFactory" /> -->
+    </cache>  
+    
+    <cache   
+        name="basicCache"   
+        eternal="false"  
+        maxElementsInMemory="1000"   
+        overflowToDisk="false"   
+        diskPersistent="false"  
+        timeToIdleSeconds="0"   
+        timeToLiveSeconds="3600"  
+        memoryStoreEvictionPolicy="LRU">
+        <!--이중화환경에서 사용  -->
+		<!-- <cacheEventListenerFactory class="net.sf.ehcache.distribution.RMICacheReplicatorFactory" /> -->
+    </cache>  
+   
+    <cache   
+        name="jsCssCache"   
+        eternal="false"  
+        maxElementsInMemory="1000"   
+        overflowToDisk="false"   
+        diskPersistent="false"  
+        timeToIdleSeconds="0"   
+        timeToLiveSeconds="3600"  
+        memoryStoreEvictionPolicy="LRU">
+        <!--이중화환경에서 사용  -->
+		<!-- <cacheEventListenerFactory class="net.sf.ehcache.distribution.RMICacheReplicatorFactory" /> -->
+    </cache>  
+   
+    <cache   
+        name="menuGrantCache"   
+        eternal="false"  
+        maxElementsInMemory="1000"   
+        overflowToDisk="false"   
+        diskPersistent="false"  
+        timeToIdleSeconds="0"   
+        timeToLiveSeconds="600"
+        memoryStoreEvictionPolicy="LRU">
+        <!--이중화환경에서 사용  -->
+		<!-- <cacheEventListenerFactory class="net.sf.ehcache.distribution.RMICacheReplicatorFactory" /> -->
+    </cache>  
+   
+    <cache   
+        name="ipcheckCache"   
+        eternal="false"  
+        maxElementsInMemory="1000"   
+        overflowToDisk="false"   
+        diskPersistent="false"  
+        timeToIdleSeconds="0"   
+        timeToLiveSeconds="3600"  
+        memoryStoreEvictionPolicy="LRU">
+        <!--이중화환경에서 사용  -->
+		<!-- <cacheEventListenerFactory class="net.sf.ehcache.distribution.RMICacheReplicatorFactory" /> -->
+    </cache>  
+        
+    <cache   
+        name="searchTextCache"   
+        eternal="false"  
+        maxElementsInMemory="1000"   
+        overflowToDisk="false"   
+        diskPersistent="false"  
+        timeToIdleSeconds="0"   
+        timeToLiveSeconds="3600"  
+        memoryStoreEvictionPolicy="LRU">
+        <!--이중화환경에서 사용  -->
+		<!-- <cacheEventListenerFactory class="net.sf.ehcache.distribution.RMICacheReplicatorFactory" /> -->
+    </cache>  
+    
+    <cache   
+        name="sessionIds"   
+        eternal="false"  
+        maxElementsInMemory="1000"   
+        overflowToDisk="false"   
+        diskPersistent="false"  
+        timeToIdleSeconds="0"   
+        timeToLiveSeconds="3600"  
+        memoryStoreEvictionPolicy="LRU">
+        <!--이중화환경에서 사용  -->
+		<!-- <cacheEventListenerFactory class="net.sf.ehcache.distribution.RMICacheReplicatorFactory" /> -->
+    </cache>  
+              
+<!-- 
+* maxElementsInMemory[필수] : 메모리에 저장할 수 있는 최대 수
+* eternal[필수] : true - 타임아웃 관련 설정 무시, element가 캐시에서 삭제되지 않음
+* overflowToDisk[필수] : maxElementInMemory 한도 도달 시 오버플로우 된 항목을 디스크에 저장할 것인지 여부
+* timeToLiveSeconds : 엘리먼트의 캐쉬 최대 유지시간(기본값 0 : 영구히 캐시에 남음)
+* timeToIdleSeconds : 캐시가 마지막으로 사용된지 얼마 후에 죽일지 시간 
+* diskPersistent : VM 종료 대비 캐시 디스크 백업 여부
+* diskExpiryThreadIntervalSeconds : 자바 GC와 비슷한 역할(default 120s)
+* memoryStoreEvictionPolicy : 메모리 삭제 정책(ex LRU)
+ -->
+          
+</ehcache>  

@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="JwTest">
+
+	<insert id="myTestInsert" parameterType="Map">
+		INSERT INTO TN_INDVDL_RCPT_BIZ_MNG
+		(
+			BIZ_YR				
+			, BIZ_NO			
+			, BIZ_CYCL			
+			, INDVDL_GRP_SE_CD
+			, RCEPT_SN	
+			, BIZ_SE_CD			
+			<!-- , DATA_SE_CD -->
+			, RCPT_STEP			
+			, RCPT_STTS			
+			, BIZ_REL_AGRE_YN	
+			, MYDATA_AGRE_YN	
+			, RCPT_DATA			
+			, REG_DT			
+			, RGTR				
+			, MDFCN_DT			
+			, MDFR
+		)
+		values
+		(
+			#{BIZ_YR}
+			, #{BIZ_NO}
+			, #{BIZ_CYCL}
+			, #{INDVDL_GRP_SE_CD}
+			, 3
+			, #{BIZ_SE_CD}
+			<!-- , #{DATA_SE_CD} -->
+			, #{RCPT_STEP}
+			, #{RCPT_STTS}
+			, #{BIZ_REL_AGRE_YN}
+			, #{MYDATA_AGRE_YN}
+			, #{RCPT_DATA}
+			, DATE_FORMAT(now(),'%Y%m%d%H%i%s')
+			, #{RGTR}
+			, DATE_FORMAT(now(),'%Y%m%d%H%i%s')
+			, #{MDFR}
+		)
+	</insert>
+
+</mapper>

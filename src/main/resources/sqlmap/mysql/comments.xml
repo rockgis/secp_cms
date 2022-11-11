@@ -1,0 +1,144 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="Comments">
+	
+	<select id="account_view" parameterType="Map" resultType="mcmap">
+		SELECT 
+			SEQ, TWT_CONSUMER_KEY, TWT_CONSUMER_SECRET, FACE_APPID, FACE_APP_SECRET, NAV_CLIENT_ID, NAV_CLIENT_SECRET, GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET, INSTA_CLIENT_ID, INSTA_CLIENT_SECRET, KAO_CLIENT_ID 
+		FROM MC_COMMENT_SNS_ACCOUNT 
+		WHERE SEQ = 1
+	</select>
+	
+	<update id="account_modify" parameterType="Map">
+		<selectKey keyProperty="check_cnt" resultType="int" order="BEFORE">
+		SELECT COUNT(1) FROM MC_COMMENT_SNS_ACCOUNT WHERE SEQ = 1
+		</selectKey>
+		<choose>
+			<when test="check_cnt>0">
+			UPDATE MC_COMMENT_SNS_ACCOUNT SET
+				TWT_CONSUMER_KEY = 				#{twt_consumer_key} 
+				, TWT_CONSUMER_SECRET = 				#{twt_consumer_secret} 
+				, FACE_APPID = 				#{face_appid} 
+				, FACE_APP_SECRET = 				#{face_app_secret} 
+				, NAV_CLIENT_ID = 				#{nav_client_id} 
+				, NAV_CLIENT_SECRET = 				#{nav_client_secret} 
+				, GOOGLE_CLIENT_ID = 				#{google_client_id} 
+				, GOOGLE_CLIENT_SECRET = 				#{google_client_secret} 
+				, INSTA_CLIENT_ID = 				#{insta_client_id} 
+				, INSTA_CLIENT_SECRET = 				#{insta_client_secret} 
+				, KAO_CLIENT_ID = 				#{kao_client_id}
+			WHERE SEQ = 1
+			</when>
+			<otherwise>
+			INSERT INTO MC_COMMENT_SNS_ACCOUNT(
+			 	SEQ, TWT_CONSUMER_KEY, TWT_CONSUMER_SECRET, FACE_APPID, FACE_APP_SECRET, NAV_CLIENT_ID, NAV_CLIENT_SECRET, GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET, INSTA_CLIENT_ID, INSTA_CLIENT_SECRET, KAO_CLIENT_ID
+			) VALUES(
+			 	1, #{twt_consumer_key}, #{twt_consumer_secret}, #{face_appid}, #{face_app_secret}, #{nav_client_id}, #{nav_client_secret}, #{google_client_id}, #{google_client_secret}, #{insta_client_id}, #{insta_client_secret}, #{kao_client_id}	
+			)
+			</otherwise>
+		</choose>
+	</update>
+	
+	<select id="list" parameterType="Map" resultType="mcmap">
+		SELECT
+			TB.*
+	 	FROM(
+			SELECT 		
+				CAST(@rownum:=@rownum+1 AS SIGNED) AS rn,
+				A.*
+			FROM (
+		        SELECT  
+					sg.*, sg2.LEVEL as LV, sg2.rn1, (SELECT REG_NM FROM MC_COMMENT_SNS WHERE sg.PARENT_SEQ=COMMENT_SEQ) PARENT_NM
+				FROM   (
+				        SELECT  start_with_connect_by_sns_comment() AS PARENT_SEQ, @level AS LEVEL, @rn:=@rn+1 AS rn1
+				        FROM    (
+				                SELECT  @start_with := 0,
+				                        @id := @start_with,
+				                        @level := 0,
+				                        @rn := 0
+				                ) vars, MC_COMMENT_SNS
+				        WHERE   @id IS NOT NULL
+				        ) sg2
+				JOIN    MC_COMMENT_SNS sg
+				ON      sg.COMMENT_SEQ = sg2.PARENT_SEQ
+					AND sg.CMS_MENU_SEQ = #{cms_menu_seq} AND sg.ARTICLE_SEQ=#{article_seq}
+				ORDER BY rn1 ASC
+			)AS A, (SELECT @rownum:=0) TMP
+		) AS TB
+		WHERE CEIL(rn/IFNULL(#{rows},10))=IFNULL(#{cpage},1)
+	</select>
+	
+	<select id="pagination" parameterType="Map" resultType="mcmap">
+	    SELECT
+	        CEIL(COUNT(1)/IFNULL(#{rows}, 10)) TOTALPAGE,
+	        COUNT(1) TOTALCOUNT
+        FROM MC_COMMENT_SNS a
+        WHERE CMS_MENU_SEQ = #{cms_menu_seq} AND ARTICLE_SEQ=#{article_seq}
+	</select>
+	
+	<update id="sns_update" parameterType="Map">
+		UPDATE MC_COMMENT_SNS SET
+			TWT_YN = #{twt_yn},
+			FACE_YN = #{face_yn},
+			KAO_YN = #{kao_yn}
+		WHERE COMMENT_SEQ = #{comment_seq}
+	</update>
+	
+	<update id="write" parameterType="Map" useGeneratedKeys="true" keyColumn="comment_seq" keyProperty="comment_seq">
+		INSERT INTO MC_COMMENT_SNS(
+			CMS_MENU_SEQ, ARTICLE_SEQ, PARENT_SEQ, CONTS, IP, PROFILE_IMG, MAIN_ACCOUNT, SNS_LINK,
+			REG_ID, REG_NM, REG_DT
+		)VALUES(
+			#{cms_menu_seq}, #{article_seq}, ifnull(#{parent_seq}, 0), #{conts}, #{session_ip}, #{profile_img}, #{main_account}, #{sns_link}, 
+			#{session_member_id}, #{session_member_nm}, sysdate()
+		)
+	</update>
+	
+	<update id="modify" parameterType="Map">
+		UPDATE MC_COMMENT_SNS SET
+			CONTS = #{conts}
+			, IP = #{session_ip}
+		WHERE COMMENT_SEQ=#{comment_seq} 
+		AND REG_ID = #{session_member_id}
+	</update>
+	
+	<update id="del" parameterType="Map">
+		<selectKey keyProperty="check_cnt" resultType="int" order="BEFORE">
+		SELECT COUNT(1) FROM MC_COMMENT_SNS WHERE PARENT_SEQ = #{comment_seq} 
+		</selectKey>
+		<choose>
+			<when test="check_cnt>0">
+			UPDATE MC_COMMENT_SNS SET
+				DEL_YN = 'Y'
+				,DEL_ID = #{session_member_id}
+				,DEL_NM = #{session_member_nm}
+				,DEL_DT = SYSDATE()
+			WHERE COMMENT_SEQ = #{comment_seq} 
+			</when>
+			<otherwise>
+			DELETE FROM MC_COMMENT_SNS WHERE COMMENT_SEQ = #{comment_seq} 
+			</otherwise>
+		</choose>
+	</update>
+	
+	<update id="face_access_token_exchange" parameterType="Map">
+		<selectKey keyProperty="check_cnt" resultType="int" order="BEFORE">
+		SELECT COUNT(1) FROM MC_COMMENT_SNS_ACCOUNT WHERE SEQ = 1
+		</selectKey>
+		<choose>
+			<when test="check_cnt>0">
+			UPDATE MC_COMMENT_SNS_ACCOUNT SET
+				FACE_ACCESS_TOKEN = 				#{face_access_token} 
+			WHERE SEQ = 1
+			</when>
+			<otherwise>
+			INSERT INTO MC_COMMENT_SNS_ACCOUNT(
+			 	SEQ, FACE_ACCESS_TOKEN
+			) VALUES(
+			 	1, #{face_access_token}	
+			)
+			</otherwise>
+		</choose>
+	</update>
+	
+</mapper>

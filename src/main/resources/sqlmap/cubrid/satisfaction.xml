@@ -1,0 +1,227 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="Satisfaction">
+	
+	<sql id="stat_listWhere">
+		AND
+			TO_CHAR(A.REG_DT, 'YYYY-MM-DD') &gt;= #{start_dt}
+		AND 
+			TO_CHAR(A.REG_DT, 'YYYY-MM-DD') &lt;=  #{end_dt}
+	</sql>
+	
+	<select id = "stats" parameterType="Map" resultType="mcmap">
+		SELECT PT1.* FROM (
+			SELECT
+            	ROW_NUMBER()OVER(ORDER BY ROW_NUM ASC) RN,
+	            A.CMS_MENU_SEQ, A.PAGE_NAVI AS TITLE,
+				NVL(SUM(B.SCORE0), 0) AS SUM_SCORE0,
+				NVL(SUM(B.SCORE1), 0) AS SUM_SCORE1,
+				NVL(SUM(B.SCORE2), 0) AS SUM_SCORE2,
+				NVL(SUM(B.SCORE3), 0) AS SUM_SCORE3,
+				NVL(SUM(B.SCORE4), 0) AS SUM_SCORE4,
+				NVL(SUM(B.SCORE5), 0) AS SUM_SCORE5,
+	            NVL(SUM(B.SCORE),0) AS SUM_SCORE,
+	            NVL(CEIL(AVG(B.SCORE)),0) AS AVG_SCORE,
+	            COUNT(B.CMS_MENU_SEQ) AS TOTAL_COUNT
+	        FROM
+	            (
+                	SELECT ROWNUM as ROW_NUM,
+	                    CMS_MENU_SEQ, TITLE, MENU_ORDER, DEL_YN, USE_YN, 
+	                    SUBSTR(SYS_CONNECT_BY_PATH(TITLE, '>'), 2) as PAGE_NAVI
+	                FROM (SELECT * FROM MC_CMS_MENU WHERE DEL_YN='N' AND USE_YN='Y') a        
+	                START WITH PARENT_MENU_SEQ = nvl(#{site_id}, '1')
+	                CONNECT BY PRIOR CMS_MENU_SEQ = PARENT_MENU_SEQ
+	                ORDER SIBLINGS BY a.MENU_ORDER
+	            ) A LEFT OUTER JOIN (
+	                SELECT 
+						CMS_MENU_SEQ, SCORE
+						, (CASE WHEN SCORE=0 THEN 1 ELSE 0 END) AS SCORE0
+						, (CASE WHEN SCORE=1 THEN 1 ELSE 0 END) AS SCORE1
+						, (CASE WHEN SCORE=2 THEN 1 ELSE 0 END) AS SCORE2
+						, (CASE WHEN SCORE=3 THEN 1 ELSE 0 END) AS SCORE3
+						, (CASE WHEN SCORE=4 THEN 1 ELSE 0 END) AS SCORE4
+						, (CASE WHEN SCORE=5 THEN 1 ELSE 0 END) AS SCORE5
+	                FROM MC_SATISFACTION
+					<if test="!(start_dt == null or end_dt == '')" >
+					WHERE DATE_FORMAT(REG_DT, '%Y-%m-%d') BETWEEN #{start_dt} AND #{end_dt}
+					</if>
+	            ) B 
+	            ON A.CMS_MENU_SEQ=B.CMS_MENU_SEQ
+				<where>
+				<if test="!(keyword == null or keyword == '')" >
+					<choose>
+						<when test="condition == 'TITLE'.toString()">AND PAGE_NAVI like  CONCAT('%',#{keyword},'%')</when>
+					</choose>
+	       		</if>
+	       		</where>
+	        GROUP BY A.CMS_MENU_SEQ, A.PAGE_NAVI, A.ROW_NUM
+        ) PT1
+		WHERE CEIL(RN/NVL(#{rows},10))=NVL(#{cpage},1)	
+	</select>
+	
+	<select id="stat_pagination" parameterType="Map" resultType="mcmap">
+		SELECT
+            CEIL(COUNT(1) / NVL(#{rows, jdbcType=INTEGER} ,10)) TOTALPAGE,
+			COUNT(1) TOTALCOUNT
+        FROM
+            (
+	        SELECT
+	            ROW_NUMBER()OVER(ORDER BY ROW_NUM ASC) RN,
+	            A.PAGE_NAVI AS TITLE,
+	            NVL(SUM(B.SCORE),0) AS SUM_SCORE,
+	            NVL(CEIL(AVG(B.SCORE)),0) AS AVG_SCORE,
+	            COUNT(B.CMS_MENU_SEQ) AS TOTAL_COUNT
+	        FROM
+	            (
+	                SELECT ROWNUM as ROW_NUM,
+	                    CMS_MENU_SEQ, TITLE, MENU_ORDER, DEL_YN, USE_YN, 
+	                    SUBSTR(SYS_CONNECT_BY_PATH(TITLE, '>'), 2) as PAGE_NAVI
+	                FROM (SELECT * FROM MC_CMS_MENU WHERE DEL_YN='N' AND USE_YN='Y') a        
+	                START WITH PARENT_MENU_SEQ = 1
+	                CONNECT BY PRIOR CMS_MENU_SEQ = PARENT_MENU_SEQ
+	                ORDER SIBLINGS BY a.MENU_ORDER
+	            ) A LEFT OUTER JOIN (
+	                SELECT 
+	                    *
+	                FROM MC_SATISFACTION
+					<if test="!(start_dt == null or end_dt == '')" >
+					WHERE DATE_FORMAT(REG_DT, '%Y-%m-%d') BETWEEN #{start_dt} AND #{end_dt}
+					</if>
+	            ) B 
+	            ON A.CMS_MENU_SEQ=B.CMS_MENU_SEQ
+				<where>
+				<if test="!(keyword == null or keyword == '')" >
+					<choose>
+						<when test="condition == 'TITLE'.toString()">AND PAGE_NAVI like  CONCAT('%',#{keyword},'%')</when>
+					</choose>
+	       		</if>
+	       		</where>
+	        GROUP BY A.CMS_MENU_SEQ, A.PAGE_NAVI, A.ROW_NUM
+	        )
+	</select>
+	
+	<select id = "execel_list" parameterType="Map" resultType="mcmap">
+		SELECT PT1.*, PT2.ETC FROM (
+			SELECT
+            	ROW_NUMBER()OVER(ORDER BY ROW_NUM ASC) RN,
+	            A.CMS_MENU_SEQ, A.PAGE_NAVI AS TITLE,
+				NVL(SUM(B.SCORE0), 0) AS SUM_SCORE0,
+				NVL(SUM(B.SCORE1), 0) AS SUM_SCORE1,
+				NVL(SUM(B.SCORE2), 0) AS SUM_SCORE2,
+				NVL(SUM(B.SCORE3), 0) AS SUM_SCORE3,
+				NVL(SUM(B.SCORE4), 0) AS SUM_SCORE4,
+				NVL(SUM(B.SCORE5), 0) AS SUM_SCORE5,
+	            NVL(SUM(B.SCORE),0) AS SUM_SCORE,
+	            NVL(CEIL(AVG(B.SCORE)),0) AS AVG_SCORE,
+	            COUNT(B.CMS_MENU_SEQ) AS TOTAL_COUNT
+	        FROM
+	            (
+                	SELECT ROWNUM as ROW_NUM,
+	                    CMS_MENU_SEQ, TITLE, MENU_ORDER, DEL_YN, USE_YN, 
+	                    SUBSTR(SYS_CONNECT_BY_PATH(TITLE, '>'), 2) as PAGE_NAVI
+	                FROM (SELECT * FROM MC_CMS_MENU WHERE DEL_YN='N' AND USE_YN='Y') a        
+	                START WITH PARENT_MENU_SEQ = nvl(#{site_id}, '1')
+	                CONNECT BY PRIOR CMS_MENU_SEQ = PARENT_MENU_SEQ
+	                ORDER SIBLINGS BY a.MENU_ORDER
+	            ) A LEFT OUTER JOIN (
+	                SELECT 
+						CMS_MENU_SEQ, SCORE
+						, (CASE WHEN SCORE=0 THEN 1 ELSE 0 END) AS SCORE0
+						, (CASE WHEN SCORE=1 THEN 1 ELSE 0 END) AS SCORE1
+						, (CASE WHEN SCORE=2 THEN 1 ELSE 0 END) AS SCORE2
+						, (CASE WHEN SCORE=3 THEN 1 ELSE 0 END) AS SCORE3
+						, (CASE WHEN SCORE=4 THEN 1 ELSE 0 END) AS SCORE4
+						, (CASE WHEN SCORE=5 THEN 1 ELSE 0 END) AS SCORE5
+	                FROM MC_SATISFACTION
+					<if test="!(start_dt == null or end_dt == '')" >
+					WHERE DATE_FORMAT(REG_DT, '%Y-%m-%d') BETWEEN #{start_dt} AND #{end_dt}
+					</if>
+	            ) B 
+	            ON A.CMS_MENU_SEQ=B.CMS_MENU_SEQ
+				<where>
+				<if test="!(keyword == null or keyword == '')" >
+					<choose>
+						<when test="condition == 'TITLE'.toString()">AND PAGE_NAVI like  CONCAT('%',#{keyword},'%')</when>
+					</choose>
+	       		</if>
+	       		</where>
+	        GROUP BY A.CMS_MENU_SEQ, A.PAGE_NAVI, A.ROW_NUM
+        ) PT1 LEFT OUTER JOIN (SELECT CMS_MENU_SEQ, SCORE, ETC FROM MC_SATISFACTION WHERE SCORE=0) PT2
+        ON PT1.CMS_MENU_SEQ=PT2.CMS_MENU_SEQ
+	</select>
+	
+	<select id="page_satisfaction" parameterType="Map" resultType="mcmap">
+		SELECT 
+			COUNT(*) CNT,  ROUND(NVL(AVG(SCORE), 0), 1) AVERAGE
+		FROM MC_SATISFACTION
+		WHERE CMS_MENU_SEQ = #{cms_menu_seq}
+	</select>
+	
+	<select id="isOverlap" parameterType="Map" resultType="int">
+		SELECT 
+			COUNT(*) CNT
+		FROM MC_SATISFACTION 
+		WHERE CMS_MENU_SEQ = #{cms_menu_seq}
+		AND IP = #{session_ip}
+		AND TO_CHAR(REG_DT, 'YYYY-MM-DD') = TO_CHAR(sysdatetime, 'YYYY-MM-DD')
+	</select>
+	
+	<update id="estimate" parameterType="Map">
+		INSERT INTO MC_SATISFACTION(
+			SEQ, CMS_MENU_SEQ, SCORE, ETC, IP, REG_DT
+		)VALUES(
+			SEQ_MC_SATISFACTION.NEXTVAL, #{cms_menu_seq}, #{score}, #{etc}, #{session_ip}, sysdatetime
+		)
+	</update>
+	
+	<select id = "etc_list" parameterType="Map" resultType="mcmap">
+		SELECT PT1.* FROM (
+            SELECT
+                rownum RN,
+                a.*
+            FROM (
+				SELECT
+					REG_DT, ETC
+				FROM MC_SATISFACTION
+				WHERE CMS_MENU_SEQ = #{cms_menu_seq}
+					AND SCORE = 0
+				ORDER BY REG_DT DESC
+            ) a
+        ) PT1
+		WHERE CEIL(RN/NVL(#{rows},10))=NVL(#{cpage},1)
+	</select>
+	
+	<select id="etc_pagination" parameterType="Map" resultType="mcmap">
+	    SELECT
+	        CEIL(COUNT(1)/NVL(#{rows}, 10)) TOTALPAGE,
+	        COUNT(1) TOTALCOUNT
+		FROM MC_SATISFACTION
+		WHERE CMS_MENU_SEQ = #{cms_menu_seq}
+			AND SCORE = 0
+	</select>
+	
+	<select id = "detail_list" parameterType="Map" resultType="mcmap">
+		SELECT PT1.* FROM (
+            SELECT
+                rownum RN,
+                a.*
+            FROM (
+				SELECT
+					REG_DT, ETC
+				FROM MC_SATISFACTION
+				WHERE CMS_MENU_SEQ = #{cms_menu_seq}
+				ORDER BY REG_DT DESC
+            ) a
+        ) PT1
+		WHERE CEIL(RN/NVL(#{rows},10))=NVL(#{cpage},1)
+	</select>
+	
+	<select id="detail_pagination" parameterType="Map" resultType="mcmap">
+	    SELECT
+	        CEIL(COUNT(1)/NVL(#{rows}, 10)) TOTALPAGE,
+	        COUNT(1) TOTALCOUNT
+		FROM MC_SATISFACTION
+		WHERE CMS_MENU_SEQ = #{cms_menu_seq}
+	</select>
+	
+</mapper>

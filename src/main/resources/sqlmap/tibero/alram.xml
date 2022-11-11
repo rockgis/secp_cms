@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="Alram">
+	
+	<select id="alram_list" parameterType="Map" resultType="mcmap" >
+		SELECT
+			T2.CMS_MENU_SEQ, T2.PARENT_MENU_SEQ, T2.TITLE as PAGE_NM,
+			T3.BOARD_TYPE, 
+			T4.ARTICLE_SEQ, T4.TITLE, TO_CHAR(T4.REG_DT, 'YYYY-MM-DD') as REG_DT, T4.REG_NM
+		FROM(
+			SELECT
+				A.*
+			FROM MC_PERSONAL_DATA A LEFT OUTER JOIN (
+				SELECT * FROM MC_ALRAM_READ WHERE TABLE_CD='FILTER' AND MEMBER_ID = #{session_member_id}
+			) B
+			ON A.SUB_SEQ = B.ARTICLE_SEQ
+			WHERE B.MEMBER_ID IS NULL
+		)T1 LEFT OUTER JOIN MC_CMS_MENU T2
+		ON T1.CMS_MENU_SEQ = T2.CMS_MENU_SEQ
+		LEFT OUTER JOIN MC_BOARD T3
+		ON T2.BOARD_SEQ = T3.BOARD_SEQ
+		LEFT OUTER JOIN MC_ARTICLE T4
+		ON T1.SUB_SEQ = T4.ARTICLE_SEQ
+	</select>
+	
+	<update id="alram_close" parameterType="Map">
+		<selectKey keyProperty="check_cnt" resultType="int" order="BEFORE">
+		SELECT COUNT(1) FROM MC_ALRAM_READ WHERE TABLE_CD = #{table_cd} AND ARTICLE_SEQ = #{article_seq} AND MEMBER_ID = #{session_member_id}
+		</selectKey>
+		<choose>
+			<when test="check_cnt>0">
+			UPDATE MC_ALRAM_READ SET
+				READ_DT=SYSDATE()
+			WHERE TABLE_CD = #{table_cd} AND ARTICLE_SEQ = #{article_seq} AND MEMBER_ID = #{session_member_id}
+			</when>
+			<otherwise>
+			INSERT INTO MC_ALRAM_READ(
+			 	TABLE_CD, ARTICLE_SEQ, MEMBER_ID, READ_DT
+			) VALUES(
+			 	#{table_cd}, #{article_seq}, #{session_member_id}, SYSDATE()	
+			)
+			</otherwise>
+		</choose>
+	</update>
+	
+</mapper>

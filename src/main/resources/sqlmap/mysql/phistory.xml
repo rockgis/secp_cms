@@ -1,0 +1,70 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="Phistory">
+	
+	<sql id="listWhere">
+		WHERE a.GUBUN=#{gubun}
+	</sql>
+	
+	<select id="list" parameterType="Map" resultType="mcmap">
+		SELECT 
+			A.*
+		FROM (
+			SELECT 
+				CAST(@ROWNUM:=@ROWNUM+1 AS SIGNED) AS RN, TB.*
+			FROM(
+				SELECT
+				    *
+				FROM MC_PHISTORY a
+				<include refid="listWhere"/>
+				ORDER BY SEQ DESC
+			) AS TB, 
+			(SELECT @ROWNUM:=0) AS R
+		)AS A
+		WHERE CEIL(RN/IFNULL(#{rows},10))=IFNULL(#{cpage},1)
+	</select>
+	
+	<select id="pagination" parameterType="Map" resultType="mcmap">
+	    SELECT
+	        CEIL(COUNT(1)/IFNULL(#{rows}, 10)) TOTALPAGE,
+	        COUNT(1) TOTALCOUNT
+        FROM MC_PHISTORY a
+		<include refid="listWhere"/>
+	</select>
+	
+	<update id="modify" parameterType="Map">
+		UPDATE MC_PHISTORY SET
+			CONTS = 				#{conts}
+			, MOD_ID = 				#{session_member_id}
+			, MOD_NM = 				#{session_member_nm}
+			, MOD_DT = 				sysdate()
+		WHERE SEQ = #{seq}
+	</update>
+	
+	<update id="write" parameterType="Map">
+		INSERT INTO MC_PHISTORY(
+			GUBUN, CONTS, REG_DT, REG_ID, REG_NM
+		)VALUES(
+			#{gubun}, #{conts}, sysdate(), #{session_member_id}, #{session_member_nm}
+		)
+	</update>
+	
+	<select id="view" parameterType="Map" resultType="mcmap">
+		SELECT
+			SEQ, GUBUN, CONTS, REG_DT, REG_ID, REG_NM, MOD_DT, MOD_ID, MOD_NM
+		FROM MC_PHISTORY 
+		WHERE SEQ = #{seq}
+	</select>
+	
+	<update id="del" parameterType="Map">
+		DELETE FROM MC_PHISTORY WHERE SEQ = #{seq} 
+	</update>
+	
+	<select id="history_list" parameterType="Map" resultType="mcmap">
+		SELECT
+			SEQ, GUBUN, DATE_FORMAT(REG_DT, '%Y-%m-%d') AS REG_DT
+		FROM MC_PHISTORY 
+		WHERE GUBUN = #{gubun}
+		ORDER BY SEQ DESC
+	</select>
+</mapper>

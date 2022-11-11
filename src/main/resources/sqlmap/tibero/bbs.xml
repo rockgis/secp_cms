@@ -1,0 +1,723 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="Bbs">
+	
+	<select id="boardType" parameterType="Map" resultType="mcmap">
+		SELECT 
+			DISTINCT B.BOARD_TYPE
+        FROM MC_CMS_MENU A
+        LEFT OUTER JOIN MC_BOARD B ON A.BOARD_SEQ = B.BOARD_SEQ AND B.DEL_YN = 'N'
+        LEFT OUTER JOIN MC_ARTICLE C ON B.BOARD_SEQ = C.BOARD_SEQ
+        WHERE
+        <choose> 
+        	<when test="!(cms_menu_seq == null)">A.CMS_MENU_SEQ=#{cms_menu_seq}</when>
+        	<when test="!(article_seq == null)">C.ARTICLE_SEQ=#{article_seq}</when>
+        	<otherwise>B.BOARD_SEQ=#{board_seq}</otherwise>
+        </choose>
+	</select>
+	
+	<select id="boardInfo" parameterType="Map" resultType="mcmap">
+		SELECT 
+			B.*, A.TITLE, A.CMS_MENU_SEQ, A.CUD_GROUP_SEQ, A.R_GROUP_SEQ, A.CONTS
+        FROM MC_CMS_MENU A
+        LEFT OUTER JOIN MC_BOARD B ON A.BOARD_SEQ = B.BOARD_SEQ AND B.DEL_YN = 'N'
+        WHERE
+        	A.CMS_MENU_SEQ=#{cms_menu_seq}
+	</select>
+	
+	<select id="boardAllList" parameterType="Map" resultType="mcmap">
+		SELECT PT1.* FROM (
+			SELECT 
+				ROWNUM AS RN,
+				T1.*
+			FROM (
+				SELECT
+					A.ARTICLE_SEQ,
+					A.BOARD_SEQ,
+					A.TITLE,
+					A.CONTS,
+					TO_CHAR(A.REG_DT, 'YYYY-MM-DD') AS REG_DT,
+					A.STEP_NUM,
+					A.DEPTH_NUM,
+					CASE WHEN A.REG_DT >= SYSDATE-3 THEN 'Y' ELSE 'N' END NEW_YN,
+					REPLACE(C.MENU_URL,'list.do','view.do') AS MENU_URL,
+					C.CMS_MENU_SEQ
+				FROM
+					MC_ARTICLE A
+					LEFT OUTER JOIN (SELECT MAX(CMS_MENU_SEQ) AS CMS_MENU_SEQ, BOARD_SEQ FROM MC_CMS_MENU WHERE MENU_TYPE = 2 AND USE_YN = 'Y' AND DEL_YN = 'N' GROUP BY BOARD_SEQ ) B ON A.BOARD_SEQ = B.BOARD_SEQ
+          LEFT OUTER JOIN MC_CMS_MENU C ON C.CMS_MENU_SEQ = B.CMS_MENU_SEQ
+				WHERE 
+					A.DEL_YN = 'N'
+				AND A.STEP_NUM = 0
+				AND A.DEPTH_NUM = 0
+				AND C.MENU_URL IS NOT NULL
+				ORDER BY A.REF_NUM DESC, A.STEP_NUM ASC, A.DEPTH_NUM DESC, A.ARTICLE_SEQ ASC
+			) T1
+		) PT1
+		WHERE RN BETWEEN NVL(#{rows, jdbcType=INTEGER},10) * (NVL(#{cpage, jdbcType=INTEGER},1) - 1) + 1 AND NVL(#{rows, jdbcType=INTEGER},10) * NVL(#{cpage, jdbcType=INTEGER},1)
+	</select>
+	
+	<select id="notice_list" parameterType="Map" resultType="mcmap" >
+				SELECT 
+					A.ARTICLE_SEQ,
+					A.BOARD_SEQ,
+					A.TITLE,
+					A.CONTS,
+					A.VIEW_CNT,
+					A.PUBLIC_YN,
+					A.NOTICE_YN,
+					A.CAT,
+					A.STATE,
+					A.THUMB,
+					TO_CHAR(A.REG_DT, 'YYYY-MM-DD') AS REG_DT,
+					A.REG_NM,
+					A.REG_ID,
+					TO_CHAR(A.SDATE, 'YYYY-MM-DD') AS SDATE,
+					TO_CHAR(A.EDATE, 'YYYY-MM-DD') AS EDATE,					
+					A.REF_NUM,
+					A.STEP_NUM,
+					A.DEPTH_NUM,
+					A.IP,
+					A.ETC01,
+					A.ETC02,
+					A.ETC03,
+					A.ETC04,
+					A.ETC05,
+					A.ETC06,
+					A.ETC07,
+					A.ETC08,
+					A.ETC09,
+					A.ETC10,
+					A.TEL1,
+					A.TEL2,
+					A.TEL3,
+					A.TEL1||'-'||A.TEL2||'-'||A.TEL3 AS TEL,
+					A.CELL1,
+					A.CELL2,
+					A.CELL3,
+					A.CELL1||'-'||A.CELL2||'-'||A.CELL3 AS CELL,
+					A.EMAIL1,
+					A.EMAIL2,
+					A.EMAIL1||'@'||A.EMAIL2 AS EMAIL,
+					A.CCL_TYPE,
+					A.NURI_TYPE,
+					A.TAG_NAMES,
+					B.BOARD_CAT_SEQ,
+					B.CAT_NM,
+					C.BOARD_STATE_SEQ,
+					C.STATE_NM,					
+					CASE WHEN A.REG_DT >= SYSDATE-3 THEN 'Y' ELSE 'N' END NEW_YN,
+					(SELECT COUNT(1) FROM MC_ATTACH WHERE TABLE_NM='MC_ARTICLE' AND TABLE_SEQ=A.ARTICLE_SEQ) AS ATTACH_CNT,
+					(SELECT COUNT(1) FROM MC_COMMENT_SNS WHERE A.ARTICLE_SEQ = ARTICLE_SEQ AND DEL_YN = 'N') AS COMMENT_CNT
+				FROM
+					MC_ARTICLE A
+					LEFT OUTER JOIN MC_BOARD_CAT B ON A.CAT = B.BOARD_CAT_SEQ AND A.BOARD_SEQ = B.BOARD_SEQ 
+					LEFT OUTER JOIN MC_BOARD_STATE C ON A.STATE = C.BOARD_STATE_SEQ AND A.BOARD_SEQ = C.BOARD_SEQ
+				WHERE A.BOARD_SEQ = #{board_seq} 
+					AND A.NOTICE_YN='Y'
+					AND A.DEL_YN='N'
+					AND A.EDATE >= TO_CHAR(SYSDATE, 'YYYY-MM-DD')
+				ORDER BY REG_DT DESC
+	</select>
+	
+	<select id="list" parameterType="Map" resultType="mcmap" >
+		SELECT PT1.* FROM (
+			SELECT 
+				ROWNUM RN,
+				T1.*
+			FROM (
+				SELECT
+					A.ARTICLE_SEQ,
+					A.BOARD_SEQ,
+					A.TITLE,
+					A.CONTS,
+					A.VIEW_CNT,
+					A.PUBLIC_YN,
+					A.NOTICE_YN,
+					A.CAT,
+					A.STATE,
+					A.THUMB,
+					TO_CHAR(A.REG_DT, 'YYYY-MM-DD') AS REG_DT,
+					A.REG_NM,
+					A.REG_ID,
+					A.SDATE,
+					A.EDATE,
+					A.REF_NUM,
+					A.STEP_NUM,
+					A.DEPTH_NUM,
+					A.CCL_TYPE,
+					A.NURI_TYPE,
+					A.TAG_NAMES,
+					B.BOARD_CAT_SEQ,
+					B.CAT_NM,
+					C.BOARD_STATE_SEQ,
+					C.STATE_NM,					
+					CASE WHEN A.REG_DT >= SYSDATE-3 THEN 'Y' ELSE 'N' END NEW_YN,
+					(SELECT COUNT(1) FROM MC_ATTACH WHERE TABLE_NM='MC_ARTICLE' AND TABLE_SEQ=A.ARTICLE_SEQ) AS ATTACH_CNT,
+					(SELECT COUNT(1) FROM MC_COMMENT_SNS WHERE A.ARTICLE_SEQ = ARTICLE_SEQ AND DEL_YN = 'N') AS COMMENT_CNT,
+					NVL(D.REPORT_CNT, 0) AS REPORT_CNT
+				FROM
+					MC_ARTICLE A
+					LEFT OUTER JOIN MC_BOARD_CAT B ON A.CAT = B.BOARD_CAT_SEQ AND A.BOARD_SEQ = B.BOARD_SEQ 
+					LEFT OUTER JOIN MC_BOARD_STATE C ON A.STATE = C.BOARD_STATE_SEQ AND A.BOARD_SEQ = C.BOARD_SEQ
+					LEFT OUTER JOIN (
+        				SELECT BOARD_SEQ, ARTICLE_SEQ, COUNT(ARTICLE_SEQ) AS REPORT_CNT FROM MC_USER_REPORT WHERE BOARD_SEQ = #{board_seq} GROUP BY BOARD_SEQ, ARTICLE_SEQ
+        			) D ON A.ARTICLE_SEQ = D.ARTICLE_SEQ AND A.BOARD_SEQ = D.BOARD_SEQ
+					<if test="!(keyword == null or keyword == '') and condition == 'COMMENT_NM'.toString()" >
+					JOIN (SELECT DISTINCT ARTICLE_SEQ FROM MC_COMMENT_SNS WHERE REG_NM = #{keyword}) E ON A.ARTICLE_SEQ = E.ARTICLE_SEQ
+					</if>
+				WHERE 
+				<choose> 
+					<when test="!(del_yn == null or del_yn == '')">
+						A.DEL_YN = #{del_yn}
+					</when>
+					<otherwise>
+						A.DEL_YN = 'N'
+					</otherwise>
+				</choose> 
+				AND A.BOARD_SEQ = #{board_seq}
+				<if test="!(keyword == null or keyword == '')" >
+					<choose>
+						<when test="condition == 'TITLE'.toString()">AND A.TITLE like '%'||#{keyword}||'%'</when>
+						<when test="condition == 'REG_NM'.toString()">AND A.REG_NM like '%'||#{keyword}||'%'</when>
+						<when test="condition == 'CONTS'.toString()">AND A.CONTS like '%'||#{keyword}||'%'</when>
+						<when test="condition == 'tagname'.toString()">AND A.TAG_NAMES like '%'||#{keyword}||'%'</when>
+					</choose>
+        		</if>
+        		<if test="!(cat == null or cat == '')" >
+				AND A.CAT = #{cat} 
+        		</if>
+        		<if test="!(state == null or state == '')" >
+				AND A.STATE = #{state} 
+        		</if>
+				ORDER BY A.REF_NUM DESC, A.STEP_NUM ASC, A.DEPTH_NUM DESC, A.ARTICLE_SEQ ASC
+			) T1
+            WHERE ROWNUM <![CDATA[ <= ]]> NVL(#{rows, jdbcType=INTEGER},10) * NVL(#{cpage, jdbcType=INTEGER},1)
+		) PT1
+		WHERE RN <![CDATA[ >= ]]> NVL(#{rows, jdbcType=INTEGER},10) * (NVL(#{cpage, jdbcType=INTEGER},1) - 1) + 1
+	</select>
+	
+	<select id="pagination" parameterType="Map" resultType="mcmap">
+		SELECT PT1.* FROM (
+			SELECT 
+				T1.*,
+				B.*
+			FROM (
+				SELECT
+					CEIL(COUNT(A.ARTICLE_SEQ) / NVL(#{rows, jdbcType=INTEGER} ,10)) TOTALPAGE,
+					COUNT(A.ARTICLE_SEQ) TOTALCOUNT
+				FROM
+					MC_ARTICLE A
+					<if test="!(keyword == null or keyword == '') and condition == 'COMMENT_NM'.toString()" >
+					JOIN (SELECT DISTINCT ARTICLE_SEQ FROM MC_COMMENT_SNS WHERE REG_NM = #{keyword}) E ON A.ARTICLE_SEQ = E.ARTICLE_SEQ
+					</if>
+				WHERE 
+				<choose> 
+					<when test="!(del_yn == null or del_yn == '')">
+						A.DEL_YN = #{del_yn}
+					</when>
+					<otherwise>
+						A.DEL_YN = 'N'
+					</otherwise>
+				</choose> 
+				AND A.BOARD_SEQ = #{board_seq}
+				<if test="!(keyword == null or keyword == '')" >
+					<choose>
+						<when test="condition == 'TITLE'.toString()">AND A.TITLE like '%'||#{keyword}||'%'</when>
+						<when test="condition == 'REG_NM'.toString()">AND A.REG_NM like '%'||#{keyword}||'%'</when>
+						<when test="condition == 'CONTS'.toString()">AND A.CONTS like '%'||#{keyword}||'%'</when>
+						<when test="condition == 'tagname'.toString()">AND A.TAG_NAMES like '%'||#{keyword}||'%'</when>
+					</choose>
+        		</if>
+        		<if test="!(cat == null or cat == '')" >
+				AND A.CAT = #{cat} 
+        		</if>
+        		<if test="!(state == null or state == '')" >
+				AND A.STATE = #{state} 
+        		</if>
+			) T1
+			LEFT OUTER JOIN MC_BOARD B ON B.BOARD_SEQ = #{board_seq}
+		) PT1
+	</select>
+	
+	<select id="catList" parameterType="Map" resultType="mcmap">
+		SELECT 
+			BOARD_CAT_SEQ,
+			BOARD_SEQ,
+			CAT_NM
+		FROM
+			MC_BOARD_CAT	
+		WHERE DEL_YN = 'N'
+		AND BOARD_SEQ = #{board_seq}
+		ORDER BY BOARD_CAT_SEQ ASC
+	</select>
+	
+	<select id="stateList" parameterType="Map" resultType="mcmap">
+		SELECT 
+			BOARD_STATE_SEQ,
+			BOARD_SEQ,
+			STATE_NM
+		FROM
+			MC_BOARD_STATE	
+		WHERE DEL_YN = 'N'
+		AND BOARD_SEQ = #{board_seq}
+		ORDER BY BOARD_STATE_SEQ ASC
+	</select>
+	
+	<insert id="write" parameterType="Map">
+		<selectKey keyProperty="article_seq" resultType="int" order="BEFORE">
+			SELECT SEQ_MC_ARTICLE.NEXTVAL FROM DUAL
+		</selectKey>
+		INSERT INTO MC_ARTICLE (
+			ARTICLE_SEQ,
+			BOARD_SEQ,
+			TITLE,
+			CONTS,
+			IP,
+			<if test="public_yn != null">
+			PUBLIC_YN,
+			</if>
+			<if test="notice_yn != null">
+			NOTICE_YN,
+			</if>
+			<if test="cat != null">
+			CAT,
+			</if>
+			<if test="state != null">
+			STATE,
+			</if>
+			<if test="thumb != null">
+			THUMB,
+			</if>			
+			REF_NUM,
+			<if test="step_num != null">
+			STEP_NUM,
+			</if>
+			<if test="depth_num != null">
+			DEPTH_NUM,
+			</if>
+			<if test="sdate != null">
+			SDATE,
+			</if>
+			<if test="edate != null">
+			EDATE,
+			</if>
+			<if test="password != null">
+			PASSWORD,
+			</if>
+			<if test="ccl_type != null">
+			CCL_TYPE,
+			</if>
+			<if test="nuri_type != null">
+			NURI_TYPE,
+			</if>
+			<if test="tag_names != null">
+			TAG_NAMES,
+			</if>
+			REG_ID,
+			REG_NM,
+			REG_DT
+		) VALUES (
+			#{article_seq},
+			#{board_seq},
+			#{title},
+			#{conts},
+			#{session_ip},
+			<if test="public_yn != null">
+			#{public_yn},
+			</if>
+			<if test="notice_yn != null">
+			#{notice_yn},
+			</if>
+			<if test="cat != null">
+			#{cat},
+			</if>
+			<if test="state != null">
+			#{state},
+			</if>
+			<if test="thumb != null">
+			#{thumb},
+			</if>
+			<choose>
+				<when test="ref_num != null">
+					#{ref_num},
+				</when>
+				<otherwise>
+					#{article_seq},
+				</otherwise>
+			</choose>			
+			<if test="step_num != null">
+			#{step_num},
+			</if>
+			<if test="depth_num != null">
+			#{depth_num},
+			</if>
+			<if test="sdate != null">
+			TO_DATE(#{sdate}, 'YYYY-MM-DD'),
+			</if>
+			<if test="edate != null">
+			TO_DATE(#{edate}, 'YYYY-MM-DD'),
+			</if>
+			<if test="password != null">
+			#{password},
+			</if>
+			<if test="ccl_type != null">
+			#{ccl_type},
+			</if>
+			<if test="nuri_type != null">
+			#{nuri_type},
+			</if>
+			<if test="tag_names != null">
+			#{tag_names},
+			</if>
+			#{session_member_id},
+			#{session_member_nm},
+			sysdate
+		)
+	</insert>
+	
+	<select id="prev_seq" parameterType="Map" resultType="mcmap">
+		SELECT 
+			MIN(article_seq) as article_seq
+		FROM MC_ARTICLE A
+		<where> 
+			<choose> 
+				<when test="!(del_yn == null or del_yn == '')">
+					A.DEL_YN = #{del_yn}
+				</when>
+				<otherwise>
+					A.DEL_YN = 'N'
+				</otherwise>
+			</choose> 
+				AND A.BOARD_SEQ = #{board_seq}
+			<if test="!(keyword == null or keyword == '')" >
+			<choose>
+				<when test="condition == 'A.TITLE'.toString()">AND A.TITLE like '%'||#{keyword}||'%'</when>
+				<when test="condition == 'A.REG_NM'.toString()">AND A.REG_NM like '%'||#{keyword}||'%'</when>
+				<when test="condition == 'A.CONTS'.toString()">AND A.CONTS like '%'||#{keyword}||'%'</when>
+			</choose>
+      		</if>
+      		<if test="!(cat == null or cat == '')" >
+			AND A.CAT = #{cat} 
+      		</if>
+      		<if test="!(state == null or state == '')" >
+			AND A.STATE = #{state} 
+      		</if>
+			AND ARTICLE_SEQ > #{article_seq}
+      	</where>
+		ORDER BY REF_NUM ASC, STEP_NUM DESC, DEPTH_NUM ASC, ARTICLE_SEQ DESC
+	</select>
+	
+	<select id="next_seq" parameterType="Map" resultType="mcmap">
+		SELECT 
+			MAX(article_seq) as article_seq
+		FROM MC_ARTICLE A
+		<where> 
+			<choose> 
+				<when test="!(del_yn == null or del_yn == '')">
+					A.DEL_YN = #{del_yn}
+				</when>
+				<otherwise>
+					A.DEL_YN = 'N'
+				</otherwise>
+			</choose> 
+				AND A.BOARD_SEQ = #{board_seq}
+			<if test="!(keyword == null or keyword == '')" >
+			<choose>
+				<when test="condition == 'A.TITLE'.toString()">AND A.TITLE like '%'||#{keyword}||'%'</when>
+				<when test="condition == 'A.REG_NM'.toString()">AND A.REG_NM like '%'||#{keyword}||'%'</when>
+				<when test="condition == 'A.CONTS'.toString()">AND A.CONTS like '%'||#{keyword}||'%'</when>
+			</choose>
+      		</if>
+      		<if test="!(cat == null or cat == '')" >
+			AND A.CAT = #{cat} 
+      		</if>
+      		<if test="!(state == null or state == '')" >
+			AND A.STATE = #{state} 
+      		</if>
+			AND ARTICLE_SEQ <![CDATA[<]]> #{article_seq}
+      	</where>
+		ORDER BY REF_NUM DESC, STEP_NUM ASC, DEPTH_NUM DESC, ARTICLE_SEQ ASC
+	</select>
+	
+	<select id="view" parameterType="Map" resultType="mcmap">
+				SELECT 
+					A.ARTICLE_SEQ,
+					A.BOARD_SEQ,
+					A.TITLE,
+					A.CONTS,
+					A.VIEW_CNT, 
+					A.PUBLIC_YN, 
+					A.NOTICE_YN, 
+					A.CAT,
+					A.STATE,
+					A.THUMB,
+					TO_CHAR(A.REG_DT,'YYYY-MM-DD') AS REG_DT,
+					A.PASSWORD, 
+					A.REG_ID, 
+					A.REG_NM, 
+					A.DEL_YN,
+					A.REF_NUM,
+					A.STEP_NUM,
+					A.DEPTH_NUM,
+					A.REPLY_CONTS,
+					A.REPLY_ID,
+					A.REPLY_NM,
+					TO_CHAR(A.REPLY_DT, 'YYYY-MM-DD HH:mi') as REPLY_DT,
+					A.CCL_TYPE,
+					A.NURI_TYPE,
+					A.TAG_NAMES,
+					B.BOARD_CAT_SEQ,
+					B.CAT_NM,
+					C.BOARD_STATE_SEQ,
+					C.STATE_NM,
+					D.FILE_YN
+				FROM 
+					MC_ARTICLE A
+					LEFT OUTER JOIN MC_BOARD_CAT B ON A.CAT = B.BOARD_CAT_SEQ AND A.BOARD_SEQ = B.BOARD_SEQ 
+					LEFT OUTER JOIN MC_BOARD_STATE C ON A.STATE = C.BOARD_STATE_SEQ AND A.BOARD_SEQ = C.BOARD_SEQ
+					LEFT OUTER JOIN MC_BOARD D ON A.BOARD_SEQ = D.BOARD_SEQ
+				WHERE A.ARTICLE_SEQ = #{article_seq}
+	</select>
+	
+	<update id="viewcount" parameterType="Map">
+		UPDATE MC_ARTICLE SET
+			VIEW_CNT = VIEW_CNT+1 
+		WHERE 
+			ARTICLE_SEQ = #{article_seq}
+	</update>
+	
+	<update id="modify" parameterType="Map">
+		UPDATE MC_ARTICLE SET 
+			TITLE=#{title}
+			,CONTS=#{conts}
+			,MOD_DT=SYSDATE
+			,MOD_ID=#{session_member_id}
+			,MOD_NM=#{session_member_nm}
+			<if test="public_yn != null">
+			,PUBLIC_YN=#{public_yn}
+			</if>
+			<if test="public_yn == 'N'.toString() and password != null and session_member_id != 'unknown'">
+			,PASSWORD=#{password}
+			</if>
+			<if test="notice_yn != null">
+			,NOTICE_YN=#{notice_yn}
+			</if>
+			<if test="cat != null">
+			,CAT=#{cat}
+			</if>
+			<if test="state != null">
+			,STATE=#{state}
+			</if>
+			<if test="thumb != null">
+			,THUMB=#{thumb}
+			</if>
+			<if test="sdate != null">
+			,SDATE=TO_DATE(#{sdate}, 'YYYY-MM-DD')
+			</if>
+			<if test="edate != null">
+			,EDATE=TO_DATE(#{edate}, 'YYYY-MM-DD')
+			</if>
+			<if test="ccl_type != null">
+			,CCL_TYPE=#{ccl_type}
+			</if>
+			<if test="nuri_type != null">
+			,NURI_TYPE=#{nuri_type}
+			</if>
+			<if test="tag_names != null">
+			,TAG_NAMES=#{tag_names}
+			</if>
+		WHERE ARTICLE_SEQ = #{article_seq}
+	</update>
+	
+	<update id="answer" parameterType="Map">
+		UPDATE MC_ARTICLE SET 
+			TITLE=#{title}
+			,CONTS=#{conts}
+			,REPLY_CONTS=#{reply_conts}
+			,REPLY_ID=#{session_member_id}
+			,REPLY_NM=#{session_member_nm}
+			,REPLY_DT=SYSDATE
+			<if test="public_yn != null">
+			,PUBLIC_YN=#{public_yn}
+			</if>
+			<if test="notice_yn != null">
+			,NOTICE_YN=#{notice_yn}
+			</if>
+			<if test="cat != null">
+			,CAT=#{cat}
+			</if>
+			<if test="state != null">
+			,STATE=#{state}
+			</if>
+		WHERE ARTICLE_SEQ = #{article_seq}
+	</update>
+	
+	<!-- 일반 게시판 삭제 -->
+	<update id="delete" parameterType="Map">
+		UPDATE MC_ARTICLE SET
+			DEL_YN='Y', 
+			DEL_DT=SYSDATE, 
+			DEL_ID=#{session_member_id}, 
+			DEL_NM=#{session_member_nm}
+ 		WHERE
+ 			DEL_YN = 'N' 
+ 		AND ARTICLE_SEQ IN 
+ 		<foreach collection="seq_list" separator="," index="index" open="(" close=")" item="item" >
+ 		 	#{item}
+ 		</foreach>  
+	</update>
+	
+	<update id="replySort" parameterType="Map">
+		UPDATE MC_ARTICLE SET 
+			STEP_NUM = STEP_NUM + 1
+		WHERE
+			DEL_YN = 'N' 
+		AND REF_NUM = #{ref_num}
+		AND STEP_NUM >= #{step_num}
+	</update>
+	
+	<select id="replyStep" parameterType="Map" resultType="mcmap" >
+		SELECT 
+			MIN(STEP_NUM) AS STEP_NUM 
+		FROM 
+			MC_ARTICLE
+		WHERE 
+			DEL_YN = 'N' 
+		AND REF_NUM = #{ref_num} 
+		AND STEP_NUM > #{step_num} 
+		AND DEPTH_NUM <![CDATA[<=]]> #{depth_num}
+	</select>
+	
+	<select id="selectStep" parameterType="Map" resultType="mcmap" >
+		SELECT 
+			MAX(STEP_NUM) + 1 AS STEP_NUM 
+		FROM 
+			MC_ARTICLE 
+		WHERE DEL_YN = 'N' 
+		AND REF_NUM = #{ref_num}
+	</select>
+	
+	<update id="articleMove" parameterType="Map">
+		UPDATE MC_ARTICLE SET
+			BOARD_SEQ = #{board_seq}
+			<if test="cat != null">
+			,CAT=#{cat}
+			</if>
+		WHERE
+			ARTICLE_SEQ IN 
+ 		<foreach collection="seq_list" separator="," index="index" open="(" close=")" item="item" >
+ 		 	#{item}
+ 		</foreach>  
+	</update>
+	
+	<insert id="articleCopy" parameterType="Map">
+		<selectKey keyProperty="article_seq" resultType="int" order="BEFORE">
+			SELECT SEQ_MC_ARTICLE.NEXTVAL FROM DUAL
+		</selectKey>
+		INSERT INTO MC_ARTICLE (
+			ARTICLE_SEQ,
+			BOARD_SEQ,
+			TITLE,
+			CONTS,
+			IP,
+			PUBLIC_YN,
+			NOTICE_YN,
+			<if test="cat != null">
+			CAT,
+			</if>
+			STATE,
+			THUMB,
+			REF_NUM,
+			STEP_NUM,
+			DEPTH_NUM,
+			SDATE,
+			EDATE,
+			PASSWORD,
+			ETC01,
+			ETC02,
+			ETC03,
+			ETC04,
+			ETC05,
+			ETC06,
+			ETC07,
+			ETC08,
+			ETC09,
+			ETC10,
+			TEL1,
+			TEL2,
+			TEL3,
+			CELL1,
+			CELL2,
+			CELL3,
+			EMAIL1,
+			EMAIL2,
+			CCL_TYPE,
+			NURI_TYPE,
+			TAG_NAMES,
+			REG_ID,
+			REG_NM,
+			REG_DT			
+		) SELECT
+			#{article_seq},
+			#{board_seq},
+			TITLE,
+			CONTS,
+			IP,
+			PUBLIC_YN,
+			NOTICE_YN,
+			<if test="cat != null">
+			#{cat},
+			</if>
+			STATE,
+			THUMB,
+			#{article_seq},
+			STEP_NUM,
+			DEPTH_NUM,
+			SDATE,
+			EDATE,
+			PASSWORD,
+			ETC01,
+			ETC02,
+			ETC03,
+			ETC04,
+			ETC05,
+			ETC06,
+			ETC07,
+			ETC08,
+			ETC09,
+			ETC10,
+			TEL1,
+			TEL2,
+			TEL3,
+			CELL1,
+			CELL2,
+			CELL3,
+			EMAIL1,
+			EMAIL2,
+			CCL_TYPE,
+			NURI_TYPE,
+			TAG_NAMES,
+			#{session_member_id},
+			#{session_member_nm},
+			SYSDATE
+		FROM MC_ARTICLE
+		WHERE ARTICLE_SEQ = #{seq} 
+	</insert>
+	
+	<delete id="articleDelete" parameterType="Map">
+		DELETE FROM MC_ARTICLE WHERE ARTICLE_SEQ IN 
+ 		<foreach collection="seq_list" separator="," index="index" open="(" close=")" item="item" >
+ 		 	#{item}
+ 		</foreach>  
+	</delete>
+	
+	<update id="articleRestore" parameterType="Map">
+		UPDATE MC_ARTICLE SET
+			DEL_YN = 'N'
+		WHERE ARTICLE_SEQ IN 
+ 		<foreach collection="seq_list" separator="," index="index" open="(" close=")" item="item" >
+ 		 	#{item}
+ 		</foreach>  
+	</update>
+</mapper>

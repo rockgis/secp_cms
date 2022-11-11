@@ -1,0 +1,24 @@
+<div ng-controller="wordFailurCtrl" title="개인정보 필터">
+	<div style="width: auto; min-height: 0px; max-height: none; height: 537px;">
+	  <div class="system_warning_box">
+	    <p><img src="/images/super/system_pop_03.png" alt="경고 아이콘"></p>
+	    <p class="system_warning_text_">
+	 등록하시려는 게시물의 본문에서<br>
+	개인정보유출이 우려되는 내용이 <br>
+	검출되었습니다.
+	    </p>
+	  </div>
+	  <h4 class="system_warning_h4_1">검출된 문자열</h4>
+	  <div class="system_warning_box2">
+	    <div class="system_warning_textarea2" style="height:150px;">
+	   		<div style="color:red;" ng-bind="str1"></div>
+	   		<div style="color:blue;" ng-bind="str2"></div>
+	   		<div style="color:red;" ng-bind="str3"></div>
+	    </div>
+	  </div>
+	  <p class="system_bot_bt">
+	    <input type="button" value="등록" class="system_warning_bt2" data-ng-click="pass()" ng-if="str1=='' && str3==''">
+	    <input type="button" value="닫기" class="system_warning_bt1" data-ng-click="close()">
+	  </p>
+	</div>
+</div>

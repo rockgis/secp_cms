@@ -1,0 +1,502 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" 
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="board">
+	
+	<select id="menu_list" parameterType="Map" resultType="mcmap">
+		SELECT  
+			sg.CMS_MENU_SEQ, sg.PARENT_MENU_SEQ, sg.TITLE, sg.MENU_ORDER, sg.SITE_ID, sg.MENU_URL, sg.TARGET_URL, sg.BLANK_YN, sg.CHILD_TYPE, sg.TOP_YN, sg.MENU_TYPE, sg.DEL_YN, sg.USE_YN
+			, DATE_FORMAT(sg.REG_DT, '%Y-%m-%d') AS REG_DT,
+			SUBSTR(SYS_CONNECT_BY_PATH_MENU(sg.CMS_MENU_SEQ, '>'), 2) AS PAGE_NAVI,
+			sys_connect_by_path_menu_order(sg.CMS_MENU_SEQ, '_') AS order_menu_set
+		FROM    (
+		        SELECT  start_with_connect_by_memu() AS PARENT_MENU_SEQ, @level AS MENU_LEVEL
+		        FROM    (
+		                SELECT  @start_with := 0,
+		                        @id := @start_with,
+		                        @level := 0,
+		                        @rn := 0
+		                ) vars, MC_CMS_MENU
+		        ) sg2
+		JOIN    MC_CMS_MENU sg
+		ON      sg.CMS_MENU_SEQ = sg2.PARENT_MENU_SEQ
+				AND sg.MENU_TYPE = '2'
+		WHERE sg.BOARD_SEQ = #{board_seq}
+		ORDER BY order_menu_set
+	</select>
+	
+	<select id="typeList" parameterType="Map" resultType="mcmap">
+		SELECT * FROM MC_BOARD_LIST ORDER BY SEQ ASC
+	</select>
+	
+	<insert id="typeInsert" parameterType="Map">
+		INSERT INTO MC_BOARD_LIST (BOARD_TYPE,NAME) VALUES (#{board_type},#{name})
+	</insert>
+	
+	<select id="typeCheck" parameterType="Map" resultType="mcmap">
+		SELECT * FROM MC_BOARD_LIST WHERE LOWER(BOARD_TYPE) = LOWER(#{board_type})
+	</select>
+	
+	<delete id="typeDelete" parameterType="Map">
+		DELETE FROM MC_BOARD_LIST WHERE SEQ = #{seq}
+	</delete>
+	
+	<update id="typeModify" parameterType="Map">
+		UPDATE MC_BOARD_LIST SET
+			BOARD_TYPE = #{board_type},
+			NAME = #{name}
+		WHERE
+			SEQ = #{seq}
+	</update>
+	 
+	<select id="list" parameterType="Map" resultType="mcmap">
+	SELECT A.* FROM (
+		SELECT 
+			CAST(@rownum:=@rownum+1 AS SIGNED) AS RN,
+			TB.*
+			, COALESCE(TB2.USER_PAGE_CNT, 0) AS USER_PAGE_CNT
+		FROM (
+			SELECT
+	  			BOARD_SEQ, BOARD_NM, BOARD_TYPE, USE_YN, EDITOR_YN, CCLNURI_YN, TAG_YN, CAT_YN,
+	  			DATE_FORMAT(REG_DT, '%Y-%m-%d') AS REG_DT
+			FROM
+	  			MC_BOARD, (SELECT @rownum:=0) TMP
+			WHERE 
+				DEL_YN='N'
+			AND SITE_ID = IFNULL(#{site_id},1) 
+			<if test="!(board_type == null or board_type == '')" >
+				AND BOARD_TYPE = #{board_type}
+			</if>
+			<if test="!(keyword == null or keyword == '')" >
+				AND BOARD_NM like CONCAT('%',#{keyword},'%')
+			</if>
+			<if test="!(use_yn == null or use_yn == '')">
+				AND USE_YN = #{use_yn}
+			</if>
+			<if test="!(start_dt == null or start_dt == '') and !(end_dt == null or end_dt == '')" >
+				AND DATE_FORMAT(REG_DT, '%Y-%m-%d') BETWEEN #{start_dt} AND #{end_dt}
+	      	</if>
+			ORDER BY REG_DT DESC
+			) TB LEFT OUTER JOIN (SELECT BOARD_SEQ, COUNT(1) AS USER_PAGE_CNT FROM MC_CMS_MENU WHERE DEL_YN = 'N' AND MENU_TYPE = '2' AND BOARD_SEQ IS NOT NULL GROUP BY BOARD_SEQ) TB2
+			ON TB.BOARD_SEQ = TB2.BOARD_SEQ
+		) A
+		WHERE RN BETWEEN IFNULL(#{rows, jdbcType=INTEGER},10) * (IFNULL(#{cpage, jdbcType=INTEGER},1) - 1) + 1 AND IFNULL(#{rows, jdbcType=INTEGER},10) * IFNULL(#{cpage, jdbcType=INTEGER},1)
+	</select>
+	
+	<select id="pageinfo" parameterType="Map" resultType="mcmap">
+		SELECT 
+			CEIL(COUNT(1) / IFNULL(#{rows, jdbcType=INTEGER} ,10)) TOTALPAGE,
+			COUNT(1) TOTALCOUNT
+		FROM
+			MC_BOARD
+		WHERE 
+			DEL_YN='N'
+		AND SITE_ID = IFNULL(#{site_id},1) 
+		<if test="!(board_type == null or board_type == '')" >
+			AND BOARD_TYPE = #{board_type}
+		</if>
+		<if test="!(keyword == null or keyword == '')" >
+			AND BOARD_NM like CONCAT('%',#{keyword},'%')
+		</if>
+		<if test="!(use_yn == null or use_yn == '')">
+			AND USE_YN = #{use_yn}
+		</if>
+		<if test="!(start_dt == null or start_dt == '') and !(end_dt == null or end_dt == '')" >
+			AND DATE_FORMAT(REG_DT, '%Y-%m-%d') BETWEEN #{start_dt} AND #{end_dt}
+      	</if>
+	</select>
+	
+	<select id="info" parameterType="Map" resultType="mcmap">
+		SELECT 
+			BOARD_SEQ,
+          	BOARD_NM,
+          	BOARD_TYPE,
+          	COMMENT_YN,
+          	COMMENT_TARGET,
+          	INSERT_YN,
+          	PUBLIC_YN,
+          	FILE_YN,
+          	LIMIT_FILE_SIZE,
+          	FILE_LIMIT,
+          	SEARCH_YN,
+          	USE_YN,
+          	CAT_YN,
+          	SITE_ID,
+          	THUMB_TYPE,
+          	AGREE_YN,
+          	EDITOR_YN,
+          	CCLNURI_YN,
+          	TAG_YN,
+          	ROWS_TEXT,
+          	LIST_ROW
+        FROM 
+        	MC_BOARD
+        WHERE 
+        	DEL_YN ='N'
+        AND BOARD_SEQ=#{board_seq}
+	</select>
+	
+	<update id="modify" parameterType="Map">
+		UPDATE MC_BOARD SET
+			BOARD_NM=#{board_nm}, 
+			BOARD_TYPE=#{board_type},
+			COMMENT_YN=#{comment_yn}, 
+			COMMENT_TARGET=#{comment_target}, 
+			INSERT_YN=#{insert_yn}, 
+			PUBLIC_YN=#{public_yn},
+			FILE_YN=#{file_yn},
+			LIMIT_FILE_SIZE=#{limit_file_size}, 
+			FILE_LIMIT=#{file_limit},
+  			SEARCH_YN=#{search_yn}, 
+  			USE_YN=#{use_yn}, 
+  			CAT_YN=#{cat_yn},
+  			THUMB_TYPE=IFNULL(#{thumb_type},'T'),
+  			AGREE_YN=IFNULL(#{agree_yn},'N'),
+  			EDITOR_YN=IFNULL(#{editor_yn},'N'),
+  			CCLNURI_YN=IFNULL(#{cclnuri_yn},'N'),
+  			TAG_YN=IFNULL(#{tag_yn},'N'),
+  			ROWS_TEXT=IFNULL(#{rows_text},'10,20,30'),
+  			LIST_ROW=IFNULL(#{list_row},'10'),
+			MOD_DT=CURRENT_TIMESTAMP, 
+			MOD_ID=#{session_member_id}, 
+			MOD_NM=#{session_member_nm}
+		WHERE 
+			BOARD_SEQ=#{board_seq}
+	</update>
+	
+	<insert id="insert" parameterType="Map">
+		<selectKey keyProperty="board_seq" resultType="int" order="BEFORE">
+			SELECT IFNULL(MAX(BOARD_SEQ),0)+1 AS BOARD_SEQ FROM MC_BOARD
+		</selectKey>
+		INSERT INTO MC_BOARD(
+			BOARD_SEQ,
+			BOARD_NM, 
+			BOARD_TYPE,
+			COMMENT_YN, 
+			COMMENT_TARGET, 
+			INSERT_YN,
+			PUBLIC_YN,
+			FILE_YN,
+			LIMIT_FILE_SIZE, 
+			FILE_LIMIT,
+  			SEARCH_YN, 
+  			USE_YN, 
+  			CAT_YN,
+  			THUMB_TYPE,
+			AGREE_YN,
+			EDITOR_YN,
+			CCLNURI_YN,
+			TAG_YN,
+			ROWS_TEXT,
+			LIST_ROW,
+  			<if test="!(site_id == null or site_id == '')">
+  			SITE_ID,
+  			</if>  			
+			REG_ID,
+			REG_NM,
+			REG_DT
+		)VALUES(
+			#{board_seq},
+			#{board_nm},
+			#{board_type},
+			#{comment_yn}, 
+			#{comment_target}, 
+			#{insert_yn}, 
+			#{public_yn}, 
+			#{file_yn},
+			#{limit_file_size}, 
+			#{file_limit},
+  			#{search_yn}, 
+  			#{use_yn}, 
+  			#{cat_yn}, 
+  			IFNULL(#{thumb_type},'T'),
+  			IFNULL(#{agree_yn},'N'),
+  			IFNULL(#{editor_yn},'N'),
+  			IFNULL(#{cclnuri_yn},'N'),
+  			IFNULL(#{tag_yn},'N'),
+  			IFNULL(#{rows_text},'10,20,30'),
+  			IFNULL(#{list_row},'10'),
+  			<if test="!(site_id == null or site_id == '')">
+  			#{site_id}, 
+  			</if>
+			#{session_member_id},
+			#{session_member_nm},
+			CURRENT_TIMESTAMP
+		)
+	</insert>
+	
+	<update id="delete" parameterType="Map">
+		UPDATE MC_BOARD SET 
+			DEL_YN='Y', 
+			DEL_DT=CURRENT_TIMESTAMP, 
+			DEL_ID=#{session_member_id}, 
+			DEL_NM=#{session_member_nm}
+		WHERE 
+			BOARD_SEQ=#{board_seq}
+	</update>
+	
+	<select id="selectCatList" parameterType="Map" resultType="mcmap">
+		SELECT 
+			BOARD_CAT_SEQ,
+			BOARD_SEQ,
+			CAT_NM
+		FROM 
+			MC_BOARD_CAT 
+		WHERE 
+			DEL_YN = 'N'
+		AND BOARD_SEQ = #{board_seq}
+		ORDER BY 
+			BOARD_CAT_SEQ
+	</select>
+	
+	<insert id="insertCat" parameterType="Map">
+		INSERT INTO MC_BOARD_CAT(
+			BOARD_SEQ, 
+			CAT_NM,
+			REG_ID,
+			REG_NM,
+			REG_DT
+		)VALUES(
+			#{board_seq},
+			#{cat_nm},
+			#{session_member_id},
+			#{session_member_nm},
+			CURRENT_TIMESTAMP
+		)
+	</insert>
+	
+	<update id="updateCat" parameterType="Map">
+		UPDATE MC_BOARD_CAT SET
+			CAT_NM = #{cat_nm},
+			MOD_DT=CURRENT_TIMESTAMP, 
+			MOD_ID=#{session_member_id}, 
+			MOD_NM=#{session_member_nm}
+		WHERE 
+			BOARD_CAT_SEQ=#{board_cat_seq}
+	</update>
+	
+	<update id="deleteCat" parameterType="Map">
+		UPDATE MC_BOARD_CAT SET
+			DEL_YN = 'Y',
+			DEL_DT=CURRENT_TIMESTAMP, 
+			DEL_ID=#{session_member_id}, 
+			DEL_NM=#{session_member_nm} 
+		WHERE
+			<if test="!(board_cat_seq == null or board_cat_seq == '')">
+			BOARD_CAT_SEQ=#{board_cat_seq}
+			</if>
+			<if test="!(board_seq == null or board_seq == '')">
+			BOARD_SEQ=#{board_seq}
+			</if>
+	</update>
+	
+	<select id="selectStateList" parameterType="Map" resultType="mcmap">
+		SELECT 
+			BOARD_STATE_SEQ,
+			BOARD_SEQ,
+			STATE_NM
+		FROM 
+			MC_BOARD_STATE 
+		WHERE 
+			DEL_YN = 'N'
+		AND BOARD_SEQ = #{board_seq}
+		ORDER BY 
+			BOARD_STATE_SEQ
+	</select>
+	
+	<insert id="insertState" parameterType="Map">
+		INSERT INTO MC_BOARD_STATE(
+			BOARD_SEQ,
+			STATE_NM,
+			REG_ID,
+			REG_NM,
+			REG_DT
+		)VALUES(
+			#{board_seq},
+			#{state_nm},
+			#{session_member_id},
+			#{session_member_nm},
+			CURRENT_TIMESTAMP
+		)
+	</insert>
+	
+	<update id="updateState" parameterType="Map">
+		UPDATE MC_BOARD_STATE SET
+			STATE_NM = #{state_nm},
+			MOD_DT=CURRENT_TIMESTAMP, 
+			MOD_ID=#{session_member_id}, 
+			MOD_NM=#{session_member_nm}
+		WHERE 
+			BOARD_STATE_SEQ=#{board_state_seq}
+	</update>
+	
+	<update id="deleteState" parameterType="Map">
+		UPDATE MC_BOARD_STATE SET
+			DEL_YN = 'Y',
+			DEL_DT=CURRENT_TIMESTAMP, 
+			DEL_ID=#{session_member_id}, 
+			DEL_NM=#{session_member_nm} 
+		WHERE
+			<if test="!(board_state_seq == null or board_state_seq == '')">
+			BOARD_STATE_SEQ=#{board_state_seq}
+			</if>
+			<if test="!(board_seq == null or board_seq == '')">
+			BOARD_SEQ=#{board_seq}
+			</if>
+	</update>
+	
+	
+	<!-- 커스텀 게시판 전용 -->
+	<select id="custom_column_list" parameterType="Map" resultType="mcmap">
+		SELECT * FROM MC_BOARD_COLUMN ORDER BY CAST(ORDER_NUM AS UNSIGNED) ASC
+	</select>
+	
+	<select id="element_list" parameterType="Map" resultType="mcmap">
+		SELECT 
+			A.SEQ,
+			A.BOARD_SEQ,
+			A.ELEMENT,
+			A.COLUMN_NAME,
+			A.USER_LIST_ELEMENT,
+			A.USER_LIST_COL,
+			A.USER_VIEW_ELEMENT,
+			A.USER_INSERT_ELEMENT,
+			A.USER_MODIFY_ELEMENT,
+			A.ADMIN_LIST_ELEMENT,
+			A.ADMIN_LIST_COL,
+			A.ADMIN_INSERT_ELEMENT,
+			A.ADMIN_MODIFY_ELEMENT,
+			A.DEL_YN,
+			A.ORDER_NUM,
+			A.REQUIRE_YN,
+			B.COL_EDIT		
+		FROM 
+			MC_BOARD_CUSTOM A,
+			MC_BOARD_COLUMN B
+		WHERE 
+			A.BOARD_SEQ = #{board_seq} 
+			AND A.DEL_YN = 'N'
+			AND A.COLUMN_NAME = B.COL_CODE
+		<choose>
+			<when test="view_focus == 'list'.toString()">
+			AND A.USER_LIST_ELEMENT = 'Y'
+			</when>
+			<when test="view_focus == 'view'.toString()">
+			AND A.USER_VIEW_ELEMENT = 'Y'
+			</when>
+			<when test="view_focus == 'insert'.toString()">
+			AND A.USER_INSERT_ELEMENT = 'Y'
+			</when>
+			<when test="view_focus == 'modify'.toString()">
+			AND A.USER_MODIFY_ELEMENT = 'Y'
+			</when>
+			
+			<when test="view_focus == 'a_list'.toString()">
+			AND A.ADMIN_LIST_ELEMENT = 'Y'
+			</when>
+			<when test="view_focus == 'a_insert'.toString()">
+			AND A.ADMIN_INSERT_ELEMENT = 'Y'
+			</when>
+			<when test="view_focus == 'a_modify'.toString()">
+			AND A.ADMIN_MODIFY_ELEMENT = 'Y'
+			</when>
+		</choose>
+		ORDER BY CAST(A.ORDER_NUM AS UNSIGNED) ASC
+	</select>
+	
+	<insert id="insert_custom" parameterType="Map">
+		INSERT INTO MC_BOARD_CUSTOM(
+			BOARD_SEQ,
+			ELEMENT,
+			COLUMN_NAME,
+			USER_LIST_ELEMENT,
+			USER_LIST_COL,
+			USER_VIEW_ELEMENT,
+			USER_INSERT_ELEMENT,
+			USER_MODIFY_ELEMENT,
+			ADMIN_LIST_ELEMENT,
+			ADMIN_LIST_COL,
+			ADMIN_INSERT_ELEMENT,
+			ADMIN_MODIFY_ELEMENT,
+			REG_ID,
+			ORDER_NUM,
+			REQUIRE_YN
+		)VALUES(
+			#{board_seq},
+			#{element},
+			#{column_name},
+			#{user_list_element}, 
+			#{user_list_col}, 
+			#{user_view_element},
+			#{user_insert_element}, 
+			#{user_modify_element},
+  			#{admin_list_element}, 
+  			#{admin_list_col}, 
+  			#{admin_insert_element}, 
+  			#{admin_modify_element},
+  			#{session_member_id},
+			#{order_num},
+			#{require_yn}
+		)
+	</insert>
+	
+	<update id="modify_custom" parameterType="Map">
+		DELETE FROM MC_BOARD_CUSTOM WHERE BOARD_SEQ = #{board_seq}
+	</update>
+	
+	<!-- 커스텀게시판 동의란 -->
+	<select id="select_custom_agree" parameterType="Map" resultType="mcmap">
+		SELECT * FROM MC_BOARD_AGREE 
+		WHERE 
+			DEL_YN = 'N'
+		AND BOARD_SEQ = #{board_seq}
+		ORDER BY AGREE_ORDER
+	</select>
+	
+	<insert id="insert_custom_agree" parameterType="Map">
+		INSERT INTO MC_BOARD_AGREE (
+			BOARD_SEQ,
+			AGREE_TIT,
+			AGREE_CONT,
+			AGREE_CHECK,
+			AGREE_ORDER,
+			REG_ID,
+			REG_NM,
+			REG_DT	
+		) VALUES (
+			#{board_seq},
+			#{agree_tit},
+			#{agree_cont},
+			#{agree_check},
+			#{agree_order},
+			#{session_member_id},
+			#{session_member_nm},
+			CURRENT_TIMESTAMP
+		)
+	</insert>
+	
+	<update id="modify_custom_agree" parameterType="Map">
+		DELETE FROM MC_BOARD_AGREE WHERE BOARD_SEQ = #{board_seq}		
+		<!-- UPDATE MC_BOARD_AGREE SET
+			 AGREE_TIT=#{agree_tit}
+			,AGREE_CONT=#{agree_cont}
+			,AGREE_CHECK=#{agree_check}
+			,AGREE_ORDER=#{agree_order}
+			,MOD_DT=CURRENT_TIMESTAMP
+			,MOD_ID=#{session_member_id}
+			,MOD_NM=#{session_member_nm}
+		WHERE
+			BOARD_SEQ = #{board_seq} -->
+	</update>
+	
+	<update id="delete_custom_agree" parameterType="Map">
+		UPDATE MC_BOARD_AGREE SET 
+			DEL_YN='Y', 
+			DEL_DT=CURRENT_TIMESTAMP, 
+			DEL_ID=#{session_member_id}, 
+			DEL_NM=#{session_member_nm}
+		WHERE 
+			BOARD_SEQ=#{board_seq}
+	</update>
+	
+</mapper>

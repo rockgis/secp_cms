@@ -10,10 +10,14 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="a83330c6-5b1a-47b4-a901-d58e698a408f" name="Changes" comment="경영환경 개선사업">
-      <change afterPath="$PROJECT_DIR$/src/main/webapp/js/admin/pdf_create.js" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/com/mc/web/programs/back/biz001/AdminBiz001Controller.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/mc/web/programs/back/biz001/AdminBiz001Controller.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/webapp/AUIGrid/AUIGrid.js" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/webapp/AUIGrid/AUIGrid.js" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/webapp/AUIGrid/AUIGridLicense.js" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/webapp/AUIGrid/AUIGridLicense.js" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/.idea/encodings.xml" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/.idea/libraries/korean_text_4_3_1_customize.xml" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/.idea/vcs.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/jpa-buddy.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/jpa-buddy.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/resources/config/mc.properties" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/resources/config/mc.properties" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/resources/sqlmap/mysql/biz001.xml" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/resources/sqlmap/mysql/biz001.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/resources/sqlmap/mysql/menu.xml" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/resources/sqlmap/mysql/menu.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/main/webapp/WEB-INF/jsp/super/homepage/biz001/indexB01.jsp" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/webapp/WEB-INF/jsp/super/homepage/biz001/indexB01.jsp" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
@@ -27,6 +31,9 @@
         <option value="Class" />
       </list>
     </option>
+  </component>
+  <component name="Git.Settings">
+    <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
   </component>
   <component name="JpbToolWindowState">
     <option name="myId2FirstActivated">
@@ -54,12 +61,12 @@
     <option name="generalSettings">
       <MavenGeneralSettings>
         <option name="useMavenConfig" value="true" />
-        <option name="userSettingsFile" value="X:\dev\rep\settings_widows.xml" />
+        <option name="userSettingsFile" value="$USER_HOME$/Dropbox/dev/rep/settings.xml" />
       </MavenGeneralSettings>
     </option>
   </component>
   <component name="ProjectId" id="2Gvn4T0z72uJIvNPYFkuePGQ3Dd" />
-  <component name="ProjectLevelVcsManager">
+  <component name="ProjectLevelVcsManager" settingsEditedManually="true">
     <ConfirmationsSetting value="2" id="Add" />
   </component>
   <component name="ProjectViewState">
@@ -90,12 +97,13 @@
     &quot;FileHistory.org.jetbrains.idea.svn.history.SvnHistoryProvider_treeWidth4&quot;: &quot;240&quot;,
     &quot;RunOnceActivity.OpenProjectViewOnStart&quot;: &quot;true&quot;,
     &quot;RunOnceActivity.ShowReadmeOnStart&quot;: &quot;true&quot;,
+    &quot;SHARE_PROJECT_CONFIGURATION_FILES&quot;: &quot;true&quot;,
     &quot;WebServerToolWindowFactoryState&quot;: &quot;false&quot;,
     &quot;last_opened_file_path&quot;: &quot;/Volumes/dev/data/mslk_workspace/secp_cms&quot;,
-    &quot;project.structure.last.edited&quot;: &quot;Libraries&quot;,
+    &quot;project.structure.last.edited&quot;: &quot;라이브러리&quot;,
     &quot;project.structure.proportion&quot;: &quot;0.15&quot;,
-    &quot;project.structure.side.proportion&quot;: &quot;0.2&quot;,
-    &quot;settings.editor.selected.configurable&quot;: &quot;preferences.pluginManager&quot;,
+    &quot;project.structure.side.proportion&quot;: &quot;0.5712644&quot;,
+    &quot;settings.editor.selected.configurable&quot;: &quot;File.Encoding&quot;,
     &quot;spring.configuration.checksum&quot;: &quot;f690ae3f69697c17cddc307181d5b858&quot;
   }
 }</component>
@@ -226,7 +234,8 @@
       <workItem from="1668127561768" duration="16997000" />
       <workItem from="1668157052216" duration="197000" />
       <workItem from="1668157273090" duration="344000" />
-      <workItem from="1668157632347" duration="19000" />
+      <workItem from="1668157632347" duration="1794000" />
+      <workItem from="1668160010145" duration="3909000" />
     </task>
     <task id="LOCAL-00001" summary="관리자 로그인 페이지 수정">
       <created>1667346210748</created>
@@ -338,6 +347,17 @@
   </component>
   <component name="TypeScriptGeneratedFilesManager">
     <option name="version" value="3" />
+  </component>
+  <component name="Vcs.Log.Tabs.Properties">
+    <option name="TAB_STATES">
+      <map>
+        <entry key="MAIN">
+          <value>
+            <State />
+          </value>
+        </entry>
+      </map>
+    </option>
   </component>
   <component name="VcsManagerConfiguration">
     <MESSAGE value="관리자 로그인 페이지 수정" />

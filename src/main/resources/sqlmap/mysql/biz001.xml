@@ -110,6 +110,18 @@
 		AND BIZ_CYCL = #{bizCycl}
 <!-- 		AND BIZ_SN=#{bizSn} -->
 	</select>
+
+	<select id="selectOneData" parameterType="Map" resultType="mcmap">
+		<!-- 사업지원 내역 선택된 데이터 -->
+		SELECT
+		CONCAT_WS('\\\\',RCPT_DATA) as RCPT_DATA
+		FROM TN_INDVDL_RCPT_BIZ_MNG
+		WHERE 1=1
+		AND BIZ_YR=#{bizYr}
+		AND BIZ_NO=#{bizNo}
+		AND BIZ_CYCL = #{bizCycl}
+		AND BIZ_SN=#{bizSn}
+	</select>
 	
 	<insert id="insertChgMng" parameterType="Map">
 		INSERT INTO TN_INDVDL_RCPT_BIZ_CHG_MNG (

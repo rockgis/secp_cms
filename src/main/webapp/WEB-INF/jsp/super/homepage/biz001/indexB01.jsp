@@ -87,86 +87,143 @@
 		"children": [{
 			"dataField": "SN",
 			"headerText": "순번",
-			"editable": false
+			"editable": false,
+			"style": "blue-Cell",
+			"filter": {
+				showIcon : true
+			}
 		}, {
 			"dataField" : "RCEPT_NO",
 			"headerText" : "접수번호",
 			"editable": false,
-			"width" : 130
+			"style": "blue-Cell",
+			"filter": {
+				showIcon : true
+			}
 		}, {
 			"dataField" : "RCEPT_SE",
 			"headerText" : "접수구분",
-			"editable": false
+			"editable": false,
+			"style": "blue-Cell",
+			"filter": {
+				showIcon : true
+			}
 		}, {
 			"dataField" : "DSTRCT",
 			"headerText" : "권역",
-			"editable": false
+			"editable": false,
+			"style": "blue_left-Cell",
+			"filter": {
+				showIcon : true
+			}
 		}, {
 			"dataField" : "RCEPT_DT",
 			"headerText" : "접수일시",
 			"editable": false,
 			"dataType": "date",
-			"formatString": "yyyy. mm. dd"
+			"formatString": "yyyy. mm. dd. HH: MM",
+			"style": "blue_right-Cell",
+			"filter": {
+				showIcon : true
+			}
 		}, {
 			"dataField" : "CHANGE_DT",
 			"headerText" : "변경일시",
 			"editable": false,
 			"dataType": "date",
-			"formatString": "yyyy. mm. dd"
+			"formatString": "yyyy. mm. dd. HH: MM",
+			"style": "blue_right-Cell",
+			"filter": {
+				showIcon : true
+			}
 		}] // end of 접수정보 "children"
 	}, {
 		"headerText" : "진행상태",
 		"children": [{
 			"dataField": "STEP",
 			"headerText": "단계",
-			"editable": false
+			"editable": false,
+			"style": "blue-Cell",
+			"filter": {
+				showIcon : true
+			}
 		}, {
 			"dataField" : "STTUS",
 			"headerText" : "상태",
-			"editable": false
+			"editable": false,
+			"style": "blue-Cell",
+			"filter": {
+				showIcon : true
+			}
 		}] // end of 진행상태 "children"
 	}, {
-		"headerText" : "사업체 신청 정보",
+		"headerText" : "사업체 신청정보",
 		"children": [{
-			"dataField" : "REQST_REALM",
-			"headerText" : "신청분야",
-			"editable": false
-		}, {
 			"dataField" : "AREA",
 			"headerText" : "지역",
-			"editable": false
+			"editable": false,
+			"style": "yellow_left-Cell",
+			"filter": {
+				showIcon : true
+			}
 		}, {
 			"dataField" : "ENTRPS_NM",
 			"headerText" : "업체명",
-			"editable": false
+			"editable": false,
+			"style": "yellow_left-Cell",
+			"filter": {
+				showIcon : true
+			}
 		}, {
 			"dataField" : "BSNM_NO",
 			"headerText" : "사업자 번호",
 			"editable": false,
-			"width" : 120
+			"style": "yellow-Cell",
+			"filter": {
+				showIcon : true
+			}
 		},{
 			"dataField" : "TAXT_TY",
 			"headerText" : "과세유형",
-			"editable": false
+			"editable": false,
+			"style": "yellow_left-Cell",
+			"filter": {
+				showIcon : true
+			}
 		},{
 			"dataField" : "BIZCND",
 			"headerText" : "업태",
-			"editable": false
+			"editable": false,
+			"style": "yellow_left-Cell",
+			"filter": {
+				showIcon : true
+			}
 		},{
 			"dataField" : "ITEM",
 			"headerText" : "종목",
-			"editable": false
+			"editable": false,
+			"style": "yellow_left-Cell",
+			"filter": {
+				showIcon : true
+			}
 		},{
 			"dataField" : "OPBIZ_DE",
 			"headerText" : "개업일자",
 			"editable": false,
 			"dataType": "date",
-			"formatString": "yyyy. mm. dd "
+			"formatString": "yyyy. mm. dd ",
+			"style": "yellow_right-Cell",
+			"filter": {
+				showIcon : true
+			}
 		},{
 			"dataField" : "BPLC_ADRES",
 			"headerText" : "사업장 주소",
 			"editable": false,
-			"width" : 200
+			"style": "yellow_left-Cell",
+			"filter": {
+				showIcon : true
+			}
 		},{
 			"dataField" : "EMPLY_CO",
 			"headerText" : "종업원 수",
@@ -178,6 +235,10 @@
 				"onlyNumeric": true,
 				"textAlign": "right",
 				"autoThousandSeparator": true
+			},
+			"style": "yellow_right-Cell",
+			"filter": {
+				showIcon : true
 			}
 		}] // end of 사업체 신청 정보 "children"
 	}, {
@@ -185,22 +246,37 @@
 		"children": [{
 			"dataField" : "RPRSNTV",
 			"headerText" : "대표자명",
-			"editable": false
+			"editable": false,
+			"style": "yellow-Cell",
+			"filter": {
+				showIcon : true
+			}
 		}, {
 			"dataField" : "LIFYEA",
 			"headerText" : "생년월일",
 			"editable": false,
 			"dataType": "date",
-			"formatString": "yyyy. mm. dd"
+			"formatString": "yyyy. mm. dd",
+			"style": "yellow_right-Cell",
+			"filter": {
+				showIcon : true
+			}
 		}, {
 			"dataField" : "SEXDSTN",
 			"headerText" : "성별",
-			"editable": false
+			"editable": false,
+			"style": "yellow-Cell",
+			"filter": {
+				showIcon : true
+			}
 		},{
 			"dataField" : "CTTPC",
 			"headerText" : "연락처",
 			"editable": false,
-			"width" : 120
+			"style": "my-column",
+			"filter": {
+				showIcon : true
+			}
 		}] // end of 대표자 정보 "children"
 	}, {
 		"headerText" : "필수 서류",
@@ -208,7 +284,10 @@
 			"dataField" : "SPORT_REQSTDOC",
 			"headerText" : "지원신청서",
 			"editable": false,
-			"style": "myLinkStyle",
+			"style": "green-Cell",
+			"filter": {
+				showIcon : true
+			},
 			// LinkRenderer 를 활용하여 javascript 함수 호출로 사용하고자 하는 경우
 			"renderer": {
 				"type": "LinkRenderer",
@@ -222,8 +301,10 @@
 			"dataField" : "INDVDLINFO_WRTCNS",
 			"headerText" : "개인정보 동의서",
 			"editable": false,
-			"width": 120,
-			"style": "myLinkStyle",
+			"style": "green-Cell",
+			"filter": {
+				showIcon : true
+			},
 			// 전체 URL 은 baseUrl + linkField 의 값으로 결정됨.
 			// baseUrl 설정하지 않으면 linkField 의 값이 URL임(즉, linkField 의 값은 온전한 URL형태를 갖는 데이터여야함)
 			"renderer": {
@@ -235,7 +316,10 @@
 			"dataField" : "CNFIRM_PROMS_PAPERS",
 			"headerText" : "확약서",
 			"editable": false,
-			"style": "myLinkStyle",
+			"style": "green-Cell",
+			"filter": {
+				showIcon : true
+			},
 			// LinkRenderer 를 활용하여 javascript 함수 호출로 사용하고자 하는 경우
 			"renderer": {
 				"type": "LinkRenderer",
@@ -249,7 +333,10 @@
 			"dataField" : "PRTN_ACTPLN",
 			"headerText" : "추진계획서",
 			"editable": false,
-			"style": "myLinkStyle",
+			"style": "green-Cell",
+			"filter": {
+				showIcon : true
+			},
 			// LinkRenderer 를 활용하여 javascript 함수 호출로 사용하고자 하는 경우
 			"renderer": {
 				"type": "LinkRenderer",
@@ -263,8 +350,10 @@
 			"dataField" : "BSNM_CEREGRT",
 			"headerText" : "사업자 등록증",
 			"editable": false,
-			"width": 120,
-			"style": "myLinkStyle",
+			"style": "green-Cell",
+			"filter": {
+				showIcon : true
+			},
 			// LinkRenderer 를 활용하여 javascript 함수 호출로 사용하고자 하는 경우
 			"renderer": {
 				"type": "LinkRenderer",
@@ -278,7 +367,10 @@
 			"dataField" : "VAT_CRTF",
 			"headerText" : "부가세 증명",
 			"editable": false,
-			"style": "myLinkStyle",
+			"style": "green-Cell",
+			"filter": {
+				showIcon : true
+			},
 			// LinkRenderer 를 활용하여 javascript 함수 호출로 사용하고자 하는 경우
 			"renderer": {
 				"type": "LinkRenderer",
@@ -292,8 +384,10 @@
 			"dataField" : "CPR_ADIT_PAPERS",
 			"headerText" : "법인추가 서류",
 			"editable": false,
-			"width": 120,
-			"style": "myLinkStyle",
+			"style": "green-Cell",
+			"filter": {
+				showIcon : true
+			},
 			// LinkRenderer 를 활용하여 javascript 함수 호출로 사용하고자 하는 경우
 			"renderer": {
 				"type": "LinkRenderer",
@@ -308,20 +402,22 @@
 		"headerText" : "2021년 부가세과세 증명",
 		"children": [{
 			"dataField" : "FRHFYR_1",
-			"headerText" : "상반기",
+			"headerText" : "시작년월",
 			"editable": false,
 			"dataType": "numeric",
-			"style": "my-column",
-			"width": 100,
 			"editRenderer": {
 				"type": "InputeditRenderer",
 				"onlyNumeric": true,
 				"textAlign": "right",
 				"autoThousandSeparator": true
+			},
+			"style": "yellow_right-Cell",
+			"filter": {
+				showIcon : true
 			}
 		}, {
 			"dataField" : "SHYY_1",
-			"headerText" : "하반기",
+			"headerText" : "끝연월",
 			"editable": false,
 			"dataType": "numeric",
 			"style": "my-column",
@@ -331,32 +427,40 @@
 				"onlyNumeric": true,
 				"textAlign": "right",
 				"autoThousandSeparator": true
+			},
+			"style": "yellow_right-Cell",
+			"filter": {
+				showIcon : true
 			}
 		}, {
 			"dataField" : "1_YY_SM_1",
 			"headerText" : "1년 계",
 			"editable": false,
 			"dataType": "numeric",
-			"style": "my-column",
-			"width": 100,
 			"editRenderer": {
 				"type": "InputeditRenderer",
 				"onlyNumeric": true,
 				"textAlign": "right",
 				"autoThousandSeparator": true
+			},
+			"style": "pink_right-Cell",
+			"filter": {
+				showIcon : true
 			}
 		},{
 			"dataField" : "SELNG_MT_1",
 			"headerText" : "매출월",
 			"editable": false,
 			"dataType": "numeric",
-			"style": "my-column",
-			"width": 100,
 			"editRenderer": {
 				"type": "InputeditRenderer",
 				"onlyNumeric": true,
 				"textAlign": "right",
 				"autoThousandSeparator": true
+			},
+			"style": "yellow_right-Cell",
+			"filter": {
+				showIcon : true
 			}
 		}, {
 			"dataField" : "RM_1",
@@ -370,52 +474,60 @@
 			"headerText" : "상반기",
 			"editable": false,
 			"dataType": "numeric",
-			"style": "my-column",
-			"width": 100,
 			"editRenderer": {
 				"type": "InputeditRenderer",
 				"onlyNumeric": true,
 				"textAlign": "right",
 				"autoThousandSeparator": true
+			},
+			"style": "yellow_right-Cell",
+			"filter": {
+				showIcon : true
 			}
 		}, {
 			"dataField" : "SHYY_2",
 			"headerText" : "하반기",
 			"editable": false,
 			"dataType": "numeric",
-			"style": "my-column",
-			"width": 100,
 			"editRenderer": {
 				"type": "InputeditRenderer",
 				"onlyNumeric": true,
 				"textAlign": "right",
 				"autoThousandSeparator": true
+			},
+			"style": "yellow_right-Cell",
+			"filter": {
+				showIcon : true
 			}
 		}, {
 			"dataField" : "1_YY_SM_2",
 			"headerText" : "1년 계",
 			"editable": false,
 			"dataType": "numeric",
-			"style": "my-column",
-			"width": 100,
 			"editRenderer": {
 				"type": "InputeditRenderer",
 				"onlyNumeric": true,
 				"textAlign": "right",
 				"autoThousandSeparator": true
+			},
+			"style": "pink_right-Cell",
+			"filter": {
+				showIcon : true
 			}
 		},{
 			"dataField" : "SELNG_MT_2",
 			"headerText" : "매출월",
 			"editable": false,
 			"dataType": "numeric",
-			"style": "my-column",
-			"width": 100,
 			"editRenderer": {
 				"type": "InputeditRenderer",
 				"onlyNumeric": true,
 				"textAlign": "right",
 				"autoThousandSeparator": true
+			},
+			"style": "yellow_right-Cell",
+			"filter": {
+				showIcon : true
 			}
 		}, {
 			"dataField" : "RM_2",
@@ -429,26 +541,30 @@
 			"headerText" : "21년 매출",
 			"editable": false,
 			"dataType": "numeric",
-			"style": "my-column",
-			"width": 100,
 			"editRenderer": {
 				"type": "InputeditRenderer",
 				"onlyNumeric": true,
 				"textAlign": "right",
 				"autoThousandSeparator": true
+			},
+			"style": "pink_right-Cell",
+			"filter": {
+				showIcon : true
 			}
 		}, {
 			"dataField" : "22_YY_SELNG",
 			"headerText" : "22년 매출",
 			"editable": false,
 			"dataType": "numeric",
-			"style": "my-column",
-			"width": 100,
 			"editRenderer": {
 				"type": "InputeditRenderer",
 				"onlyNumeric": true,
 				"textAlign": "right",
 				"autoThousandSeparator": true
+			},
+			"style": "pink_right-Cell",
+			"filter": {
+				showIcon : true
 			}
 		}] // end of (월환산) 매출액 "children"
 
@@ -457,19 +573,25 @@
 		"children": [{
 			"dataField" : "REQST_REALM",
 			"headerText" : "신청분야",
-			"editable": false
+			"editable": false,
+			"style": "orange_left-Cell",
+			"filter": {
+				showIcon : true
+			}
 		}, {
 			"dataField" : "SPORT_LMT",
 			"headerText" : "지원한도",
 			"editable": false,
 			"dataType": "numeric",
 			"style": "my-column",
-			"width": 100,
 			"editRenderer": {
 				"type": "InputeditRenderer",
 				"onlyNumeric": true,
 				"textAlign": "right",
 				"autoThousandSeparator": true
+			},
+			"filter": {
+				showIcon : true
 			}
 		}] // end of 지원결정액 "children"
 	}, {
@@ -477,24 +599,50 @@
 		"children": [{
 			"dataField" : "CNSTRCT_ENTRPS_1",
 			"headerText" : "시공업체",
-			"editable": false
+			"editable": true,
+			"editRenderer" : {
+				"type" : "InputEditRenderer",
+				"textAlign": "left"
+			},
+			"filter": {
+				showIcon : true
+			}
 		}, {
 			"dataField" : "BSNM_NO_1",
-			"headerText" : "사업자 번호"
+			"headerText" : "사업자 번호",
+			"editRenderer" : {
+				"type" : "InputEditRenderer",
+				"onlyNumeric": true
+			},
+			"filter": {
+				showIcon : true
+			}
 		}, {
 			"dataField" : "REQST_REALM_DETAIL_1",
 			"headerText" : "전화",
-			"editable": false,
-			"width" : 100
+			"editable": true,
+			"editRenderer" : {
+				"type" : "InputEditRenderer",
+				"onlyNumeric": true
+			},
+			"filter": {
+				showIcon : true
+			}
 		}, {
 			"dataField" : "REQST_REALM_DETAIL_1",
 			"headerText" : "신청분야 세부내역",
-			"editable": false,
-			"width" : 120
+			"editable": true,
+			"editRenderer" : {
+				"type" : "InputEditRenderer",
+				"textAlign" : "left"
+			},
+			"filter": {
+				showIcon : true
+			}
 		}, {
 			"dataField" : "SPLPC_1",
 			"headerText" : "공급가",
-			"editable": false,
+			"editable": true,
 			"dataType": "numeric",
 			"style": "my-column",
 			"width": 100,
@@ -503,32 +651,39 @@
 				"onlyNumeric": true,
 				"textAlign": "right",
 				"autoThousandSeparator": true
+			},
+			"filter": {
+				showIcon : true
 			}
 		}, {
 			"dataField" : "VAT_1",
 			"headerText" : "부가세 ",
-			"editable": false,
+			"editable": true,
 			"dataType": "numeric",
 			"style": "my-column",
-			"width": 100,
 			"editRenderer": {
 				"type": "InputeditRenderer",
 				"onlyNumeric": true,
 				"textAlign": "right",
 				"autoThousandSeparator": true
+			},
+			"filter": {
+				showIcon : true
 			}
 		}, {
 			"dataField" : "SUBSUM_1",
 			"headerText" : "소계",
-			"editable": false,
+			"editable": true,
 			"dataType": "numeric",
 			"style": "my-column",
-			"width": 100,
 			"editRenderer": {
 				"type": "InputeditRenderer",
 				"onlyNumeric": true,
 				"textAlign": "right",
 				"autoThousandSeparator": true
+			},
+			"filter": {
+				showIcon : true
 			}
 		}] // end of 견적서 1 "children"
 	}, {
@@ -536,60 +691,92 @@
 		"children": [{
 			"dataField" : "CNSTRCT_ENTRPS_2",
 			"headerText" : "시공업체",
-			"editable": false
+			"editable": true,
+			"editRenderer" : {
+				"type": "InputEditRenderer",
+				"textAlign" : "left"
+			},
+			"filter": {
+				showIcon : true
+			}
 		}, {
 			"dataField" : "BSNM_NO_2",
 			"headerText" : "사업자 번호",
-			"editable": false,
+			"editable": true,
+			"editRenderer" : {
+				"type" : "InputEditRenderer",
+				"onlyNumeric": true
+			},
+			"filter": {
+				showIcon : true
+			}
 		}, {
 			"dataField" : "TLPHON_2",
 			"headerText" : "전화",
-			"editable": false,
-			"width" : 100
+			"editable": true,
+			"editRenderer" : {
+				"type" : "InputEditRenderer",
+				"onlyNumeric" : true,
+				"textAlign" : "right"
+			},
+			"filter": {
+				showIcon : true
+			}
 		}, {
 			"dataField" : "REQST_REALM_DETAIL_2",
 			"headerText" : "신청분야 세부내역",
-			"editable": false,
-			"width" : 120
-
+			"editable": true,
+			"editRenderer" : {
+				"type" : "InputEditRenderer",
+				"textAlign" : "left"
+			},
+			"filter": {
+				showIcon : true
+			}
 		}, {
 			"dataField" : "SPLPC_2",
 			"headerText" : "공급 가액",
-			"editable": false,
+			"editable": true,
 			"dataType": "numeric",
 			"style": "my-column",
-			"width": 100,
 			"editRenderer": {
 				"type": "InputeditRenderer",
 				"onlyNumeric": true,
 				"textAlign": "right",
 				"autoThousandSeparator": true
+			},
+			"filter": {
+				showIcon : true
 			}
 		}, {
 			"dataField" : "VAT_2",
 			"headerText" : "부가세 ",
-			"editable": false,
+			"editable": true,
 			"dataType": "numeric",
-			"style": "my-column",
-			"width": 100,
+			"style": "pink_right-Cell",
 			"editRenderer": {
 				"type": "InputeditRenderer",
 				"onlyNumeric": true,
 				"textAlign": "right",
 				"autoThousandSeparator": true
+			},
+			"filter": {
+				showIcon : true
 			}
 		}, {
 			"dataField" : "SUBSUM_2",
 			"headerText" : "소계",
-			"editable": false,
+			"editable": true,
 			"dataType": "numeric",
-			"style": "my-column",
-			"width": 100,
+			"style": "pink_right-Cell",
 			"editRenderer": {
 				"type": "InputeditRenderer",
 				"onlyNumeric": true,
 				"textAlign": "right",
 				"autoThousandSeparator": true
+			},
+			"filter": {
+				showIcon : true
 			}
 		}] // end of 견적서 2 "children"
 	},  {
@@ -597,15 +784,18 @@
 		"children": [ {
 			"dataField" : "ESTMT_TOT_SM",
 			"headerText" : "견적 총 합계",
-			"editable": false,
+			"editable": true,
 			"dataType": "numeric",
-			"style": "my-column",
+			"style": "pink_right-Cell",
 			"width": 100,
 			"editRenderer": {
 				"type": "InputeditRenderer",
 				"onlyNumeric": true,
 				"textAlign": "right",
 				"autoThousandSeparator": true
+			},
+			"filter": {
+				showIcon : true
 			}
 		}] // end of 견적합계 "children"
 	}, {
@@ -616,12 +806,14 @@
 			"editable": false,
 			"dataType": "numeric",
 			"style": "my-column",
-			"width": 100,
 			"editRenderer": {
 				"type": "InputeditRenderer",
 				"onlyNumeric": true,
 				"textAlign": "right",
 				"autoThousandSeparator": true
+			},
+			"filter": {
+				showIcon : true
 			}
 		}, {
 			"dataField" : "SELF_AM",
@@ -629,42 +821,80 @@
 			"editable": false,
 			"dataType": "numeric",
 			"style": "my-column",
-			"width": 100,
 			"editRenderer": {
 				"type": "InputeditRenderer",
 				"onlyNumeric": true,
 				"textAlign": "right",
 				"autoThousandSeparator": true
+			},
+			"filter": {
+				showIcon : true
 			}
 		}] // end of 지원결정액 "children"
 	}, {
 		"headerText" : "서류메모",
 		"children": [{
 			"dataField" : "JDGMN_REFER",
-			"headerText" : "심사참고"
+			"headerText" : "심사참고",
+			"editRenderer": {
+				"type": "InputeditRenderer",
+				"textAlign": "left"
+			},
+			"filter": {
+				showIcon : true
+			}
 		}, {
 			"dataField" : "INPUT_MEMO",
-			"headerText" : "입력메모"
+			"headerText" : "입력메모",
+			"editRenderer": {
+				"type": "InputeditRenderer",
+				"textAlign": "left"
+			},
+			"filter": {
+				showIcon : true
+			}
 		}, {
 			"dataField" : "UPRPD_PAPERS",
-			"headerText" : "추가,미비서류"
+			"headerText" : "추가,미비서류",
+			"editRenderer": {
+				"type": "InputeditRenderer",
+				"textAlign": "left"
+			},
+			"filter": {
+				showIcon : true
+			}
 		}, {
 			"dataField" : "WLSBM_INPUT",
-			"headerText" : "검수입력"
+			"headerText" : "검수입력",
+			"editRenderer": {
+				"type": "InputeditRenderer",
+				"textAlign": "left"
+			},
+			"filter": {
+				showIcon : true
+			}
 		}] // end of 서류메모 "children"
 	}, {
 		"headerText" : "①교육, 컨설팅 ",
 		"children": [{
 			"dataField" : "EDC_CNSL",
 			"headerText" : "내용",
-			"editable": false
+			"editable": false,
+			"style": "green-Cell",
+			"filter": {
+				showIcon : true
+			}
 		}] // end of ①교육, 컨설팅 "children"
 	}, {
 		"headerText" : "②사회 배려자",
 		"children": [{
 			"dataField" : "SOCTY_WKSN",
 			"headerText" : "내용",
-			"editable": false
+			"editable": false,
+			"style": "green-Cell",
+			"filter": {
+				showIcon : true
+			}
 		}] // end of ②사회 배려자 "children"
 	}, {
 		"headerText" : "③4대보험 고용",
@@ -673,7 +903,7 @@
 			"headerText" : "인원",
 			"editable": false,
 			"dataType": "numeric",
-			"style": "my-column",
+			"style": "yellow_right-Cell",
 			"width": 100,
 			"editRenderer": {
 				"type": "InputeditRenderer",
@@ -687,17 +917,29 @@
 		"children": [{
 			"dataField" : "CARBON_PNT",
 			"headerText" : "내용",
-			"editable": false
+			"editable": false,
+			"style": "green-Cell",
+			"filter": {
+				showIcon : true
+			}
 		}] // end of ④탄소포인트 "children"
 	},{
 		"headerText" : "데이터 확인",
 		"children": [{
 			"dataField" : "OPBIZ_DE_RESULT",
 			"headerText" : "개업일자",
-			"editable": false
+			"editable": false,
+			"style": "my-column",
+			"filter": {
+				showIcon: true
+			}
 		}, {
 			"dataField" : "BSN_DAYCNT",
-			"headerText" : "영업일수"
+			"headerText" : "영업일수",
+			"style": "my-column",
+			"filter": {
+				showIcon: true
+			}
 		}] // end of 데이터 확인 "children"
 	}, {
 		"headerText" : "정량점수(60)",
@@ -711,6 +953,9 @@
 				"onlyNumeric": true,
 				"textAlign": "right",
 				"autoThousandSeparator": true
+			},
+			"filter": {
+				showIcon: true
 			}
 		}, {
 			"dataField" : "SELNG",
@@ -722,6 +967,9 @@
 				"onlyNumeric": true,
 				"textAlign": "right",
 				"autoThousandSeparator": true
+			},
+			"filter": {
+				showIcon: true
 			}
 		}, {
 			"dataField" : "DCRS_RT",
@@ -733,6 +981,9 @@
 				"onlyNumeric": true,
 				"textAlign": "right",
 				"autoThousandSeparator": true
+			},
+			"filter": {
+				showIcon: true
 			}
 		}] // end of 정량점수(60) "children"
 	}, {
@@ -747,6 +998,9 @@
 				"onlyNumeric": true,
 				"textAlign": "right",
 				"autoThousandSeparator": true
+			},
+			"filter": {
+				showIcon: true
 			}
 		}, {
 			"dataField" : "SOCTY_WKSN_CNT",
@@ -758,6 +1012,9 @@
 				"onlyNumeric": true,
 				"textAlign": "right",
 				"autoThousandSeparator": true
+			},
+			"filter": {
+				showIcon: true
 			}
 		}, {
 			"dataField" : "CARBON_PNT_CNT",
@@ -769,6 +1026,9 @@
 				"onlyNumeric": true,
 				"textAlign": "right",
 				"autoThousandSeparator": true
+			},
+			"filter": {
+				showIcon: true
 			}
 		}] // end of 가산점(촤대 10, 각 2 ~5점) "children"
 	}, {
@@ -783,6 +1043,9 @@
 				"onlyNumeric": true,
 				"textAlign": "right",
 				"autoThousandSeparator": true
+			},
+			"filter": {
+				showIcon: true
 			}
 		}, {
 			"dataField" : "FDQNT_CNT",
@@ -794,6 +1057,9 @@
 				"onlyNumeric": true,
 				"textAlign": "right",
 				"autoThousandSeparator": true
+			},
+			"filter": {
+				showIcon: true
 			}
 		}, {
 			"dataField" : "ADDI_CNT",
@@ -805,20 +1071,29 @@
 				"onlyNumeric": true,
 				"textAlign": "right",
 				"autoThousandSeparator": true
+			},
+			"filter": {
+				showIcon: true
 			}
 		}, {
 			"dataField" : "PROPER_YM",
-			"headerText" : "적격여부"
+			"headerText" : "적격여부",
+			"filter": {
+				showIcon: true
+			}
 		}, {
 			"dataField" : "SUM_SCORE",
 			"headerText" : "합계점수",
 			"dataType": "numeric",
-			"style": "my-column",
+			"style": "orange_right-Cell",
 			"editRenderer": {
 				"type": "InputeditRenderer",
 				"onlyNumeric": true,
 				"textAlign": "right",
 				"autoThousandSeparator": true
+			},
+			"filter": {
+				showIcon: true
 			}
 		}] // end of 합계(정량+가산) "children"
 	}, {
@@ -833,6 +1108,9 @@
 				"onlyNumeric": true,
 				"textAlign": "right",
 				"autoThousandSeparator": true
+			},
+			"filter": {
+				showIcon: true
 			}
 		}, {
 			"dataField" : "JDGMM2",
@@ -844,6 +1122,9 @@
 				"onlyNumeric": true,
 				"textAlign": "right",
 				"autoThousandSeparator": true
+			},
+			"filter": {
+				showIcon: true
 			}
 		}, {
 			"dataField" : "JDGMM3",
@@ -855,17 +1136,23 @@
 				"onlyNumeric": true,
 				"textAlign": "right",
 				"autoThousandSeparator": true
+			},
+			"filter": {
+				showIcon: true
 			}
 		}, {
 			"dataField" : "AVRG",
 			"headerText" : "평균",
 			"dataType": "numeric",
-			"style": "my-column",
+			"style": "orange_right-Cell",
 			"editRenderer": {
 				"type": "InputeditRenderer",
 				"onlyNumeric": true,
 				"textAlign": "right",
 				"autoThousandSeparator": true
+			},
+			"filter": {
+				showIcon: true
 			}
 		}] // end of 정성평가 "children"
 	}, {
@@ -874,42 +1161,76 @@
 			"dataField" : "SCORE",
 			"headerText" : "점수",
 			"dataType": "numeric",
-			"style": "my-column",
+			"style": "orange_right-Cell",
 			"editRenderer": {
 				"type": "InputeditRenderer",
 				"onlyNumeric": true,
 				"textAlign": "right",
 				"autoThousandSeparator": true
+			},
+			"filter": {
+				showIcon: true
 			}
 		}, {
 			"dataField" : "RANK",
 			"headerText" : "순위",
 			"dataType": "numeric",
-			"style": "my-column",
+			"style": "orange_right-Cell",
 			"editRenderer": {
 				"type": "InputeditRenderer",
 				"onlyNumeric": true,
 				"textAlign": "right",
 				"autoThousandSeparator": true
+			},
+			"filter": {
+				showIcon: true
 			}
 		}] // end of 최종 "children"
 	}, {
 		"headerText" : "최종선정",
 		"children": [{
 			"dataField" : "DECSN",
-			"headerText" : "결정"
+			"headerText" : "결정",
+			"filter": {
+				showIcon: true
+			},
+			"editRenderer": {
+				"type": "InputeditRenderer",
+				"textAlign": "left"
+			}
 		}] // end of 최종선정 children
 	}, {
 		"headerText" : "비고",
 		"children": [{
 			"dataField" : "SLCTN_EXCL",
-			"headerText" : "선정제외"
+			"headerText" : "선정제외",
+			"filter": {
+				showIcon: true
+			},
+			"editRenderer": {
+				"type": "InputeditRenderer",
+				"textAlign": "left"
+			}
 		}, {
 			"dataField" : "REQUST",
-			"headerText" : "보안요청"
+			"headerText" : "보안요청",
+			"filter": {
+				showIcon: true
+			},
+			"editRenderer": {
+				"type": "InputeditRenderer",
+				"textAlign": "left"
+			}
 		}, {
 			"dataField" : "ETC",
-			"headerText" : "기타"
+			"headerText" : "기타",
+			"filter": {
+				showIcon: true
+			},
+			"editRenderer": {
+				"type": "InputeditRenderer",
+				"textAlign": "left"
+			}
 		}] // end of 정성평가 "children"
 	} ];
 
@@ -921,10 +1242,10 @@
 		// 그리드 속성 설정
 		var gridPros = {
 
-			headerHeights : [30, 40],
+			headerHeights : [18, 18],
 
 			// 고정칼럼 카운트 지정
-			fixedColumnCount: 3,
+			fixedColumnCount: 8,
 
 			// 편집 가능 여부 (기본값 : false)
 			editable: true,
@@ -953,14 +1274,13 @@
 			// 칼럼 리사아징 false 설정
 			enableColumnResize: false,
 
-			noDataMessage: "출력할 데이터가 없습니다.",
-			// 그룹핑 패널 사용
+			noDataMessage: "출력할 데이터가 없습니다."
 			// 그룹핑 패널 사용
 			//useGroupingPanel: true,
 			//groupingMessage: "여기에 칼럼을 드래그하면 그룹핑이 됩니다."
 
 			// rowIdField 설정
-			rowIdField: "id",
+			//rowIdField: "id",
 
 			// 엑스트라 체크박스 표시 설정
 			showRowCheckColumn: true,
@@ -995,26 +1315,24 @@
 		// 실제로 #grid_wrap 에 그리드 생성
 		myGridID = AUIGrid.create("#grid_wrap", columnLayout, gridPros);
 
-		// ready 이벤트 바인딩
-		AUIGrid.bind(myGridID, "ready", function (event) {
-			setCheckedRowsByIds(); // 시작 시 체크된 상태로 표시
-		});
-
-		// 체크박스 클린 이벤트 바인딩
-		AUIGrid.bind(myGridID, "rowCheckClick", function (event) {
-			alert("rowIndex : " + event.rowIndex + ", id : " + event.item.id + ", name : " + event.item.name + ", checked : " + event.checked + ", shiftKey : " + event.shiftKey + ", shiftIndex : " + event.shiftIndex);
-		});
-
-		// 전체 체크박스 클릭 이벤트 바인딩
-		AUIGrid.bind(myGridID, "rowAllChkClick", function (event) {
-			alert("전체 선택  checked : " + event.checked);
-		});
-
-
 		// 데이터 요청, 요청 성공 시 AUIGrid 에 데이터 삽입합니다.
 		requestJsonData();
 
 	}
+
+	/* 그리드 최적 사이즈 적용시 컬럼 사이즈가 더 작아지는 문제 */
+
+	/* 	$(document).ready(function setFitColumnSizeToGrid(){
+            //현재 그리드의 값을 모두 조사하여 최적의 칼럼 사이즈를 찾아 그리드 크기에 맞추기
+                // 현재 출력된 칼럼들의 값을 모두 조사하여 최적의 칼럼 사이즈를 찾아 배열로 반환.
+                // 만약 칼럼 사이즈들의 총합이 그리드 크기보다 작다면, 나머지 값들을 나눠 가져 그리드 크기에 맞추기
+                var colSizeList = AUIGrid.getFitColumnSizeList(myGridID, true);
+
+                // 구해진 칼럼 사이즈를 적용 시킴.
+                AUIGrid.setColumnSizeList(myGridID, colSizeList);
+        }); */
+
+
 
 	function requestJsonData() {
 
